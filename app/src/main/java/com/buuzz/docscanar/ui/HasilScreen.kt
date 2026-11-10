@@ -38,14 +38,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.buuzz.docscanar.gambar.ModeWarna
@@ -334,6 +339,11 @@ private fun PilihanWarna(
     }
 }
 
+/**
+ * Editor sudut dengan kaca pembesar. Saat satu titik aktif, gambar di sekitarnya
+ * diperbesar 3x di pojok berlawanan supaya pengguna bisa melihat tepi kertas
+ * yang sedang ia pegang.
+ */
 @Composable
 private fun SudutEditor(
     asli: Bitmap,
@@ -341,11 +351,11 @@ private fun SudutEditor(
     onSudut: (List<Titik>) -> Unit,
 ) {
     val density = LocalDensity.current
-    val radiusPilih = with(density) { 44.dp.toPx() }
     val radiusTitik = with(density) { 12.dp.toPx() }
+    val ukuranKaca = with(density) { 120.dp.toPx() }
+    val pembesaran = 3f
+    val gambar = remember(asli) { asli.asImageBitmap() }
 
-    // Kunci gesture ke bitmap saja. Kalau `sudut` jadi key, pointerInput restart
-    // tiap kali satu titik bergeser dan drag terputus di tengah jalan.
     val sudutKini by rememberUpdatedState(sudut)
     val onSudutKini by rememberUpdatedState(onSudut)
     var seret by remember { mutableStateOf(-1) }
@@ -356,19 +366,13 @@ private fun SudutEditor(
             .pointerInput(asli) {
                 detectDragGestures(
                     onDragStart = { posisi ->
-                        val skala = size.width.toFloat() / asli.width
                         val jarak = sudutKini.map { t ->
-                            val dx = t.x * skala - posisi.x
-                            val dy = t.y * skala - posisi.y
+                            val p = Offset(t.x * size.width / asli.width, t.y * size.width / asli.width)
+                            val dx = p.x - posisi.x
+                            val dy = p.y - posisi.y
                             dx * dx + dy * dy
                         }
-                        val terdekat = jarak.indices.minByOrNull { jarak[it] } ?: -1
-                        seret = if (terdekat >= 0 && jarak[terdekat] <= radiusPilih * radiusPilih) {
-                            terdekat
-                        } else {
-                            // Di luar radius: tetap ambil titik terdekat supaya drag tidak mati.
-                            terdekat
-                        }
+                        seret = jarak.indices.minByOrNull { jarak[it] } ?: -1
                     },
                     onDragEnd = { seret = -1 },
                     onDragCancel = { seret = -1 },
@@ -404,5 +408,73 @@ private fun SudutEditor(
             drawCircle(Color(0xFF3DDC97), radiusTitik, p)
             drawCircle(Color(0xFF0A0A0B), radiusTitik * 0.35f, p)
         }
+
+        val aktif = seret
+        if (aktif < 0 || aktif >= titik.size) return@Canvas
+
+        val fokus = titik[aktif]
+
+        // Kaca ditaruh di pojok yang paling jauh dari titik aktif.
+        val kanan = fokus.x < size.width / 2f
+        val bawah = fokus.y < size.height / 2f
+        val kacaKiri = if (kanan) size.width - ukuranKaca - 12.dp.toPx() else 12.dp.toPx()
+        val kacaAtas = if (bawah) size.height - ukuranKaca - 12.dp.toPx() else 12.dp.toPx()
+        val pusatKaca = Offset(kacaKiri + ukuranKaca / 2f, kacaAtas + ukuranKaca / 2f)
+
+        clipRect(
+            left = kacaKiri,
+            top = kacaAtas,
+            right = kacaKiri + ukuranKaca,
+            bottom = kacaAtas + ukuranKaca,
+        ) {
+            drawRect(Color(0xFF141416), Offset(kacaKiri, kacaAtas), Size(ukuranKaca, ukuranKaca))
+
+            // Sumber dalam piksel bitmap: selebar kaca dibagi pembesaran, lalu
+            // dikonversi dari koordinat kanvas ke koordinat gambar.
+            val sisiSumber = (ukuranKaca / (pembesaran * skala)).toInt().coerceAtLeast(1)
+            val pusatSumberX = (fokus.x / skala).toInt()
+            val pusatSumberY = (fokus.y / skala).toInt()
+            val srcX = (pusatSumberX - sisiSumber / 2).coerceIn(0, maxOf(0, asli.width - sisiSumber))
+            val srcY = (pusatSumberY - sisiSumber / 2).coerceIn(0, maxOf(0, asli.height - sisiSumber))
+
+            drawImage(
+                image = gambar,
+                srcOffset = IntOffset(srcX, srcY),
+                srcSize = IntSize(sisiSumber, sisiSumber),
+                dstOffset = IntOffset(kacaKiri.toInt(), kacaAtas.toInt()),
+                dstSize = IntSize(ukuranKaca.toInt(), ukuranKaca.toInt()),
+            )
+        }
+
+        drawRect(
+            color = Color(0xFF3DDC97),
+            topLeft = Offset(kacaKiri, kacaAtas),
+            size = Size(ukuranKaca, ukuranKaca),
+            style = Stroke(width = 2.dp.toPx()),
+        )
+
+        // Garis bidik di tengah kaca.
+        val setengahKaca = ukuranKaca * 0.18f
+        drawLine(
+            color = Color(0xFF3DDC97).copy(alpha = 0.8f),
+            start = Offset(pusatKaca.x - setengahKaca, pusatKaca.y),
+            end = Offset(pusatKaca.x + setengahKaca, pusatKaca.y),
+            strokeWidth = 1.dp.toPx(),
+        )
+        drawLine(
+            color = Color(0xFF3DDC97).copy(alpha = 0.8f),
+            start = Offset(pusatKaca.x, pusatKaca.y - setengahKaca),
+            end = Offset(pusatKaca.x, pusatKaca.y + setengahKaca),
+            strokeWidth = 1.dp.toPx(),
+        )
+
+        // Pena tipis yang menghubungkan titik aktif ke kaca.
+        drawLine(
+            color = Color(0xFF3DDC97).copy(alpha = 0.35f),
+            start = fokus,
+            end = pusatKaca,
+            strokeWidth = 1.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 8f)),
+        )
     }
 }
