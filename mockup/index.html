@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DocScan AR — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ui:Poppins,"Segoe UI",Roboto,system-ui,sans-serif;
+    --shadow:0 18px 34px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:#0A0B0D;color:#E9E9EC;
+    font-family:var(--ui);
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit}
+  :focus-visible{outline:2px solid #7DD3FC;outline-offset:2px}
+
+  /* ---------- page chrome (bukan bagian aplikasi) ---------- */
+  .bar{
+    position:sticky;top:0;z-index:60;
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    padding:12px 20px;background:rgba(10,11,13,.94);
+    border-bottom:1px solid #1B1D21;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand strong{font-size:15px;font-weight:600}
+  .brand span{font-size:12px;color:#7E828A}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .tabs{display:flex;gap:4px;background:#131519;padding:4px;border-radius:12px;overflow-x:auto}
+  .tabs button{
+    min-height:42px;padding:0 14px;border:0;border-radius:9px;background:transparent;
+    color:#9AA0A8;font:500 13px/1 var(--ui);cursor:pointer;white-space:nowrap;
+  }
+  .tabs button[aria-selected="true"]{background:#262A30;color:#fff}
+  .ghostbtn{
+    min-height:42px;padding:0 16px;border-radius:10px;border:1px solid #2B2F36;background:#15181C;
+    color:#D8DCE2;font:500 13px/1 var(--ui);cursor:pointer;
+  }
+  .ghostbtn[aria-pressed="true"]{border-color:#2F5D3F;background:#12251A;color:#9AF0BC}
+
+  .stage{
+    display:flex;gap:28px;padding:28px 20px 20px;
+    justify-content:center;align-items:flex-start;overflow-x:auto;
+  }
+  .wrap{display:flex;flex-direction:column;gap:12px;align-items:center;flex:0 0 auto}
+  .cap{font:500 12px/1.5 var(--ui);color:#8A8F98;text-align:center;max-width:390px;margin:0}
+  .cap strong{color:#D5D9DF;font-weight:600}
+  .foot{font:400 12px/1.6 var(--ui);color:#6C7178;text-align:center;padding:0 20px 40px;margin:0}
+
+  /* ---------- frame HP ---------- */
+  .phone{
+    position:relative;width:390px;aspect-ratio:390/844;flex:0 0 auto;
+    border-radius:46px;overflow:hidden;
+    background:var(--bg);color:var(--fg);
+    box-shadow:0 0 0 9px #16181C,0 0 0 10px #2B2F36,0 30px 60px rgba(0,0,0,.55);
+    isolation:isolate;
+  }
+  .island{
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:110px;height:28px;border-radius:16px;background:#000;z-index:40;
+  }
+  .homebar{
+    position:absolute;bottom:9px;left:50%;transform:translateX(-50%);
+    width:120px;height:5px;border-radius:3px;background:#fff;
+    mix-blend-mode:difference;opacity:.55;z-index:40;pointer-events:none;
+  }
+  .screenslot{position:absolute;inset:0}
+
+  /* ---------- varian ---------- */
+  .phone[data-variant="studio"]{
+    --bg:#0A0A0B;--fg:#F4F4F5;--muted:#8B8B90;--surface:#141416;--field:#1C1C1F;
+    --line:#2A2A2E;--accent:#E7E9EC;--on-accent:#0A0A0B;--ok:#3DDC97;--warn:#F5A524;
+    --navbg:rgba(10,10,11,.97);
+  }
+
+  /* ---------- bagian umum layar ---------- */
+  .screen{position:absolute;inset:0;background:var(--bg);color:var(--fg)}
+  .sbar{
+    position:absolute;top:0;left:0;right:0;height:54px;z-index:30;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 28px;font:600 13px/1 var(--ui);pointer-events:none;color:var(--fg);
+  }
+  .sbar.light{color:#fff}
+  .sbar .sicons{display:flex;align-items:center;opacity:.92}
+
+  .scr{
+    position:absolute;inset:0;display:flex;flex-direction:column;gap:16px;
+    padding:64px 20px 28px;overflow-y:auto;overscroll-behavior:contain;
+  }
+  .scr::-webkit-scrollbar{width:0}
+  .scr.with-nav{padding-bottom:108px}
+  .h1{font:600 22px/1.25 var(--ui);margin:0;letter-spacing:-.01em}
+  .sub{font:400 13px/1.5 var(--ui);color:var(--muted);margin:0}
+  .toprow{display:flex;align-items:center;gap:12px}
+  .toprow .h1{flex:1}
+  .badge{
+    font:600 11px/1 var(--ui);color:var(--accent);background:var(--field);
+    border:1px solid var(--line);padding:7px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .icon{
+    width:48px;height:48px;flex:0 0 auto;border-radius:14px;border:1px solid var(--line);
+    background:transparent;color:var(--fg);font-size:17px;cursor:pointer;
+    display:grid;place-items:center;
+  }
+  .icon:active{background:var(--field)}
+
+  .btn{
+    min-height:52px;border-radius:14px;border:1px solid transparent;
+    font:600 15px/1 var(--ui);cursor:pointer;display:grid;place-items:center;
+    transition:transform .12s ease,opacity .12s ease;
+  }
+  .btn:active{transform:scale(.985);opacity:.92}
+  .btn.primary{background:var(--accent);color:var(--on-accent)}
+  .btn.ghost{background:transparent;border-color:var(--line);color:var(--fg)}
+  .actions{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:10px}
+
+  /* ---------- kamera ---------- */
+  .cam{overflow:hidden}
+  .scene{
+    position:absolute;inset:0;
+    background:radial-gradient(120% 90% at 50% 8%,#3B4046 0%,#191C20 52%,#0A0B0C 100%);
+  }
+  .sheet{
+    position:absolute;left:50%;top:51%;width:70%;aspect-ratio:210/297;
+    transform:translate(-50%,-50%) rotate(-4deg);
+    background:#F4F1EA;border-radius:2px;
+    box-shadow:0 22px 44px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.05);
+    padding:16px 18px;display:flex;flex-direction:column;gap:10px;overflow:hidden;
+  }
+  .sheet::after{
+    content:"";position:absolute;inset:auto -10% -30% 40%;
+    height:70%;background:radial-gradient(circle,rgba(0,0,0,.28),transparent 70%);
+  }
+  .sheet i{display:block;height:5px;border-radius:2px;background:#C9C3B6}
+  .sheet i.h{height:9px;background:#B9B2A3}
+
+  .guide{position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+  .guide polygon,.guide path,.guide line,.guide circle{
+    fill:none;stroke:rgba(255,255,255,.55);stroke-width:2;
+    vector-effect:non-scaling-stroke;stroke-linejoin:round;
+  }
+  .guide .gline{stroke-dasharray:5 7;opacity:.6}
+  .guide circle{r:14;opacity:.5}
+  .cam.is-ready .guide polygon,.cam.is-ready .guide path,
+  .cam.is-ready .guide line,.cam.is-ready .guide circle{
+    stroke:var(--ok);opacity:.95;
+  }
+
+  .cam-top{
+    position:absolute;top:64px;left:16px;right:16px;z-index:20;
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;
+    border-radius:999px;background:rgba(12,14,16,.82);
+    border:1px solid rgba(255,255,255,.14);color:#EAECEF;
+    font:500 12px/1 var(--ui);white-space:nowrap;
+  }
+  .chip .k{color:#9BA3AC;font-size:11px}
+  .chip .u{color:#9BA3AC}
+  .chip.ok{border-color:rgba(74,222,128,.45);background:rgba(16,46,30,.88)}
+  .chip.warn{border-color:rgba(251,191,36,.5);background:rgba(58,40,8,.88)}
+
+  .num{display:inline-flex;align-items:baseline}
+  .num .d{display:inline-block;width:.58em;text-align:center}
+  .num .s{display:inline-block;width:.28em;text-align:center}
+
+  .cam-status{
+    position:absolute;left:16px;right:16px;bottom:216px;z-index:18;
+    display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+    pointer-events:none;
+  }
+  .ready{
+    font:600 32px/1.1 var(--ui);letter-spacing:-.01em;color:#fff;
+    text-shadow:0 2px 18px rgba(0,0,0,.55);margin:0;
+  }
+  .cam.is-ready .ready{color:var(--ok)}
+  .cam:not(.is-ready) .ready{font-size:22px;color:var(--warn)}
+  .hint{
+    font:500 12px/1.4 var(--ui);color:rgba(255,255,255,.74);margin:0;
+    max-width:280px;text-shadow:0 1px 8px rgba(0,0,0,.6);
+  }
+
+  .cam-bottom{
+    position:absolute;left:0;right:0;bottom:0;z-index:20;
+    padding:0 24px 30px;display:flex;flex-direction:column;align-items:center;gap:12px;
+    background:linear-gradient(to top,rgba(0,0,0,.78) 30%,rgba(0,0,0,0));
+  }
+  .manual{
+    min-height:48px;padding:0 20px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.24);background:rgba(14,16,18,.72);
+    color:#EDEFF2;font:500 13px/1 var(--ui);cursor:pointer;
+  }
+  .manual:active{background:rgba(40,44,48,.9)}
+  .shutter{
+    width:78px;height:78px;border-radius:50%;flex:0 0 auto;
+    border:4px solid rgba(255,255,255,.9);background:transparent;
+    display:grid;place-items:center;cursor:pointer;padding:0;
+  }
+  .shutter span{
+    width:62px;height:62px;border-radius:50%;background:#fff;display:block;
+    transition:transform .12s ease;
+  }
+  .shutter:active span{transform:scale(.9)}
+  .cam-note{font:400 11px/1.4 var(--ui);color:rgba(255,255,255,.52);margin:0;text-align:center;max-width:260px}
+
+  /* ---------- memproses ---------- */
+  .proc{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:8px}
+  .proc-page{
+    position:relative;width:168px;aspect-ratio:210/297;border-radius:6px;overflow:hidden;
+    background:#F4F1EA;box-shadow:var(--shadow);
+  }
+  .proc-page::after{
+    content:"";position:absolute;left:0;right:0;top:0;height:36%;
+    background:linear-gradient(to bottom,transparent,rgba(74,222,128,.4));
+    transform:translateY(-100%);animation:scan 1.7s linear infinite;
+  }
+  @keyframes scan{to{transform:translateY(280%)}}
+  .steps{width:100%;list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .steps li{
+    display:flex;align-items:center;gap:12px;min-height:48px;
+    font:500 14px/1.3 var(--ui);color:var(--muted);
+  }
+  .steps li.done,.steps li.active{color:var(--fg)}
+  .dot{
+    width:22px;height:22px;flex:0 0 auto;border-radius:50%;
+    border:1.5px solid currentColor;display:grid;place-items:center;
+    font:600 11px/1 var(--ui);
+  }
+  .steps li.done .dot{background:var(--ok);border-color:var(--ok);color:#06170D}
+  .steps li.active .dot{border-color:var(--accent);color:var(--accent)}
+
+  /* ---------- hasil ---------- */
+  .result-page{
+    flex:0 0 auto;border-radius:16px;overflow:hidden;
+    border:1px solid var(--line);box-shadow:var(--shadow);
+  }
+  .page{
+    aspect-ratio:4/5;background:#F4F1EA;padding:22px 24px;
+    display:flex;flex-direction:column;gap:9px;
+  }
+  .page i{display:block;height:4px;border-radius:2px;background:#C9C3B6}
+  .page i.h{height:9px;background:#B9B2A3}
+  .ocr{
+    flex:0 0 auto;display:flex;flex-direction:column;gap:6px;
+    padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);
+  }
+  .ocr .lbl{display:flex;justify-content:space-between;font:600 12px/1 var(--ui);color:var(--muted)}
+  .ocr p{margin:0;font:400 13px/1.5 var(--ui);color:var(--fg)}
+
+  /* ---------- arsip ---------- */
+  .search{
+    display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;
+    border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--muted);
+  }
+  .search input{
+    border:0;background:transparent;color:var(--fg);width:100%;
+    font:400 14px/1 var(--ui);outline:none;min-height:44px;
+  }
+  .search input::placeholder{color:var(--muted)}
+  .docs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .doc{
+    display:flex;gap:12px;align-items:center;width:100%;min-height:76px;
+    padding:10px;border-radius:14px;border:1px solid var(--line);background:var(--surface);
+    color:inherit;font-family:inherit;text-align:left;cursor:pointer;
+  }
+  .doc:active{background:var(--field)}
+  .thumb{
+    width:44px;height:58px;flex:0 0 auto;border-radius:4px;background:#F4F1EA;
+    padding:6px 5px;display:flex;flex-direction:column;gap:3px;overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.07);
+  }
+  .thumb i{display:block;height:2.5px;border-radius:1px;background:#CFC8BA}
+  .thumb i.h{height:4px;background:#BDB5A4}
+  .doc-body{flex:1;min-width:0}
+  .doc-t{
+    font:600 14px/1.3 var(--ui);margin:0;color:var(--fg);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .doc-m{font:400 12px/1.3 var(--ui);color:var(--muted);margin:4px 0 0}
+
+  .phone[data-variant="studio"] .doc{
+    background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:12px 2px;
+  }
+  .phone[data-variant="studio"] .thumb{width:40px;height:54px}
+
+  /* ---------- pengaturan ---------- */
+  .group{
+    display:flex;flex-direction:column;gap:12px;padding:16px;
+    border-radius:16px;border:1px solid var(--line);background:var(--surface);
+  }
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px}
+  .row strong{display:block;font:600 14px/1.35 var(--ui);color:var(--fg)}
+  .row small{display:block;font:400 12px/1.4 var(--ui);color:var(--muted);margin-top:3px}
+  .row output{font:600 14px/1 var(--ui);color:var(--accent)}
+  input[type="range"]{
+    width:100%;height:32px;accent-color:var(--accent);background:transparent;cursor:pointer;
+  }
+  .seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--field)}
+  .seg button{
+    flex:1;min-height:42px;border:0;border-radius:9px;background:transparent;
+    color:var(--muted);font:500 13px/1 var(--ui);cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.16)}
+  .phone[data-variant="studio"] .seg button[aria-pressed="true"]{background:#2C2C2F}
+  .sw{
+    width:54px;height:34px;flex:0 0 auto;border-radius:999px;border:0;cursor:pointer;
+    background:var(--field);position:relative;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .sw::after{
+    content:"";position:absolute;top:5px;left:5px;width:24px;height:24px;border-radius:50%;
+    background:var(--muted);transition:transform .16s ease,background .16s ease;
+  }
+  .sw[aria-checked="true"]{background:var(--ok);box-shadow:none}
+  .sw[aria-checked="true"]::after{transform:translateX(20px);background:#fff}
+  .linkbtn{
+    min-height:48px;padding:0 14px;border-radius:10px;border:1px solid var(--line);
+    background:transparent;color:var(--accent);font:600 13px/1 var(--ui);cursor:pointer;
+  }
+
+  /* ---------- nav bawah ---------- */
+  .nav{
+    position:absolute;left:0;right:0;bottom:0;z-index:25;
+    display:flex;justify-content:space-around;gap:4px;
+    padding:8px 10px 22px;background:var(--navbg);border-top:1px solid var(--line);
+  }
+  .nav button{
+    flex:1;max-width:120px;min-height:56px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;border:0;border-radius:12px;
+    background:transparent;color:var(--muted);font:500 11px/1 var(--ui);cursor:pointer;
+  }
+  .nav button[aria-current="page"]{color:var(--fg)}
+  .nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  @media (max-width:1250px){
+    .stage{justify-content:flex-start}
+  }
+  @media (max-width:640px){
+    .phone{width:min(390px,86vw)}
+    .bar{padding:10px 14px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .proc-page::after{animation:none;transform:translateY(40%)}
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <strong>DocScan AR</strong>
+    <span>mockup · Poppins · data palsu</span>
+  </div>
+  <div class="tools">
+    <div class="tabs" role="tablist" aria-label="Pilih layar">
+      <button role="tab" aria-selected="true" data-screen="kamera">Kamera</button>
+      <button role="tab" aria-selected="false" data-screen="proses">Memproses</button>
+      <button role="tab" aria-selected="false" data-screen="hasil">Hasil</button>
+      <button role="tab" aria-selected="false" data-screen="arsip">Arsip</button>
+      <button role="tab" aria-selected="false" data-screen="pengaturan">Setelan</button>
+    </div>
+    <button class="ghostbtn" id="readyToggle" aria-pressed="true">Kondisi: siap</button>
+  </div>
+</header>
+
+<main class="stage" id="stage"></main>
+<p class="foot">Klik "Ambil manual" atau tombol shutter untuk mencoba alur capture → proses → hasil. Semua data di halaman ini palsu.</p>
+
+<script>
+const state = { screen: 'kamera', ready: true, phase: 0, angle: 2.0, flash: 'Otomatis', auto: true };
+let timers = [];
+
+const NUM = s => `<span class="num">${[...s].map(c =>
+  /[0-9]/.test(c) ? `<span class="d">${c}</span>` : `<span class="s">${c}</span>`
+).join('')}</span>`;
+
+const sicons = `<svg width="52" height="12" viewBox="0 0 52 12" fill="none" aria-hidden="true">
+  <rect x="0" y="7" width="3" height="5" rx="1" fill="currentColor"/>
+  <rect x="5" y="5" width="3" height="7" rx="1" fill="currentColor"/>
+  <rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/>
+  <rect x="15" y="1" width="3" height="11" rx="1" fill="currentColor"/>
+  <path d="M26 4.4a7.5 7.5 0 0 1 8.6 0M28.4 6.8a4.6 4.6 0 0 1 4.4 0M30.6 9.2a1.9 1.9 0 0 1 .6 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <rect x="40" y="3" width="10" height="6" rx="1.6" stroke="currentColor" stroke-width="1.2"/>
+  <rect x="41.7" y="4.7" width="5.2" height="2.6" rx=".8" fill="currentColor"/>
+  <path d="M51.3 5.3v1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+</svg>`;
+
+const statusBar = light => `<div class="sbar ${light ? 'light' : ''}" aria-hidden="true"><span>14:23</span><span class="sicons">${sicons}</span></div>`;
+
+const pageLines = (h = 4) => `
+  <i class="h" style="width:54%"></i>
+  <i style="width:92%"></i><i style="width:86%"></i>
+  <i style="width:${h ? 74 : 66}%"></i><i style="width:88%"></i>
+  <i style="width:64%"></i><i style="width:80%"></i>
+  <i style="width:46%"></i>`;
+
+const docs = [
+  { t: 'Kuitansi sewa kos Oktober 2026', m: '10 Nov · 1 halaman' },
+  { t: 'Catatan kuliah — algoritma greedy', m: '9 Nov · 3 halaman' },
+  { t: 'Formulir pendaftaran beasiswa', m: '7 Nov · 2 halaman' },
+  { t: 'Struk fotokopi 24 lembar', m: '5 Nov · 1 halaman' },
+];
+
+const navIcon = {
+  kamera: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6.5" width="18" height="13" rx="3"/><path d="M8.5 6.5 10 4h4l1.5 2.5"/><circle cx="12" cy="13" r="3.4"/></svg>`,
+  arsip: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4"/><path d="M8.5 12h7M8.5 15.5h4.5"/></svg>`,
+  pengaturan: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M18 6l-1.6 1.6M7.6 16.4 6 18"/></svg>`,
+};
+
+const nav = active => `<nav class="nav" aria-label="Navigasi utama">
+  ${[['kamera', 'Kamera'], ['arsip', 'Arsip'], ['pengaturan', 'Setelan']].map(([id, label]) => `
+    <button data-screen="${id}" ${active === id ? 'aria-current="page"' : ''}>
+      ${navIcon[id]}<span>${label}</span>
+    </button>`).join('')}
+</nav>`;
+
+function camScreen() {
+  const r = state.ready;
+  return `<section class="screen cam ${r ? 'is-ready' : ''}" aria-label="Kamera">
+    ${statusBar(true)}
+    <div class="scene" aria-hidden="true">
+      <div class="sheet">
+        <i class="h" style="width:58%"></i>
+        <i style="width:92%"></i><i style="width:84%"></i><i style="width:90%"></i>
+        <i style="width:72%"></i><i style="width:88%"></i><i style="width:52%"></i>
+      </div>
+    </div>
+    <svg class="guide" viewBox="0 0 390 844" aria-hidden="true">
+      <polygon points="54,212 336,194 352,640 42,658"/>
+      <path d="M54 232v-20h22"/><path d="M314 194h22v20"/>
+      <path d="M352 620v20h-22"/><path d="M64 658h-22v-20"/>
+      <line class="gline" x1="54" y1="425" x2="352" y2="425"/>
+      <circle cx="198" cy="425" r="14"/>
+    </svg>
+    <div class="cam-top">
+      <span class="chip ${r ? 'ok' : 'warn'}"><span class="k">Sudut</span>${NUM(r ? '1.2' : '7.4')}<span class="u">°</span></span>
+      <span class="chip ${r ? 'ok' : 'warn'}"><span class="k">Cahaya</span><span>${r ? 'cukup' : 'redup'}</span></span>
+      <span class="chip ${r ? 'ok' : 'warn'}"><span class="k">Getar</span><span>${r ? 'stabil' : 'goyah'}</span></span>
+    </div>
+    <div class="cam-status">
+      <p class="ready">${r ? 'Siap' : 'Belum siap'}</p>
+      <p class="hint">${r ? 'Tahan diam, memotret otomatis' : 'Dekatkan ke kertas, hindari bayangan'}</p>
+    </div>
+    <div class="cam-bottom">
+      <button class="manual" data-act="capture">Ambil manual</button>
+      <button class="shutter" data-act="capture" aria-label="Ambil foto sekarang"><span></span></button>
+      <p class="cam-note">Auto-capture aktif saat ketiga indikator hijau</p>
+    </div>
+  </section>`;
+}
+
+function prosesScreen() {
+  const steps = ['Memotong tepi', 'Meluruskan perspektif', 'Memperjelas teks', 'Membaca teks'];
+  const active = state.phase;
+  return `<section class="screen scr" aria-label="Memproses">
+    ${statusBar(false)}
+    <h1 class="h1">Memproses</h1>
+    <p class="sub">Tetap di halaman ini sampai selesai.</p>
+    <div class="proc">
+      <div class="proc-page" aria-hidden="true"><div class="page">${pageLines()}</div></div>
+      <ol class="steps">
+        ${steps.map((s, i) => `<li class="${i < active ? 'done' : i === active ? 'active' : ''}">
+          <span class="dot" aria-hidden="true">${i < active ? '✓' : i + 1}</span>${s}
+        </li>`).join('')}
+      </ol>
+    </div>
+  </section>`;
+}
+
+function hasilScreen() {
+  return `<section class="screen scr" aria-label="Hasil pemindaian">
+    ${statusBar(false)}
+    <div class="toprow">
+      <button class="icon" data-act="retry" aria-label="Kembali ke kamera">←</button>
+      <h1 class="h1">Hasil</h1>
+      <span class="badge">1 halaman</span>
+    </div>
+    <div class="result-page"><div class="page">${pageLines()}</div></div>
+    <div class="ocr">
+      <div class="lbl"><span>Teks terbaca</span><span>96%</span></div>
+      <p>KUITANSI PEMBAYARAN — Telah diterima dari Rizky Pratama, uang sejumlah Rp 850.000 untuk sewa kamar kos bulan Oktober 2026.</p>
+    </div>
+    <div class="actions">
+      <button class="btn primary" data-act="save">Simpan PDF</button>
+      <button class="btn ghost" data-act="retry">Scan ulang</button>
+    </div>
+  </section>`;
+}
+
+function arsipScreen() {
+  return `<section class="screen scr with-nav" aria-label="Arsip dokumen">
+    ${statusBar(false)}
+    <div class="toprow"><h1 class="h1">Arsip</h1><span class="badge">12 dokumen</span></div>
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/>
+      </svg>
+      <input type="search" placeholder="Cari isi dokumen" aria-label="Cari isi dokumen">
+    </div>
+    <ul class="docs">
+      ${docs.map(d => `<li><button class="doc">
+        <span class="thumb" aria-hidden="true"><i class="h" style="width:60%"></i><i style="width:88%"></i><i style="width:74%"></i><i style="width:82%"></i><i style="width:50%"></i></span>
+        <span class="doc-body"><span class="doc-t">${d.t}</span><span class="doc-m">${d.m}</span></span>
+      </button></li>`).join('')}
+    </ul>
+    ${nav('arsip')}
+  </section>`;
+}
+
+function pengaturanScreen() {
+  return `<section class="screen scr with-nav" aria-label="Pengaturan">
+    ${statusBar(false)}
+    <div class="toprow"><h1 class="h1">Setelan</h1></div>
+
+    <div class="group">
+      <div class="row"><label for="sudut">Sudut maksimum</label><output id="sudutOut">${Number(state.angle).toFixed(1)}°</output></div>
+      <input id="sudut" type="range" min="0.5" max="5" step="0.1" value="${state.angle}" aria-label="Sudut maksimum auto-capture">
+      <p class="sub">Auto-capture hanya berjalan bila HP berada di dalam sudut ini.</p>
+    </div>
+
+    <div class="group">
+      <div class="row"><strong>Flash</strong></div>
+      <div class="seg" role="group" aria-label="Mode flash">
+        ${['Otomatis', 'Selalu', 'Mati'].map(m => `<button aria-pressed="${state.flash === m}" data-flash="${m}">${m}</button>`).join('')}
+      </div>
+      <p class="sub">Otomatis menyalakan flash saat ruangan redup.</p>
+    </div>
+
+    <div class="group">
+      <div class="row">
+        <div><strong>Auto-capture</strong><small>Potret sendiri saat indikator hijau</small></div>
+        <button class="sw" role="switch" aria-checked="${state.auto}" aria-label="Auto-capture" data-act="toggle-auto"></button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="row">
+        <div><strong>Bahasa OCR</strong><small>Latin · terpasang</small></div>
+        <button class="linkbtn" data-act="noop">Ubah</button>
+      </div>
+    </div>
+
+    ${nav('pengaturan')}
+  </section>`;
+}
+
+const screens = {
+  kamera: camScreen,
+  proses: prosesScreen,
+  hasil: hasilScreen,
+  arsip: arsipScreen,
+  pengaturan: pengaturanScreen,
+};
+
+const variants = [
+  ['studio', 'C — Studio', 'Poppins, status 32sp, aksen netral + hijau siap'],
+];
+
+const stage = document.getElementById('stage');
+
+stage.innerHTML = variants.map(([id, label, note]) => `
+  <div class="wrap">
+    <div class="phone" data-variant="${id}">
+      <div class="island" aria-hidden="true"></div>
+      <div class="screenslot"></div>
+      <div class="homebar" aria-hidden="true"></div>
+    </div>
+    <p class="cap"><strong>${label}</strong> — ${note}</p>
+  </div>`).join('');
+
+function render() {
+  const html = screens[state.screen]();
+  document.querySelectorAll('.phone .screenslot').forEach(slot => { slot.innerHTML = html; });
+  document.querySelectorAll('.tabs [data-screen]').forEach(tab => {
+    tab.setAttribute('aria-selected', String(tab.dataset.screen === state.screen));
+  });
+}
+
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+function setScreen(screen) {
+  clearTimers();
+  state.screen = screen;
+  render();
+}
+
+function startCapture() {
+  clearTimers();
+  state.screen = 'proses';
+  state.phase = 0;
+  render();
+  const step = 760;
+  for (let i = 1; i <= 3; i++) {
+    timers.push(setTimeout(() => {
+      state.phase = i;
+      if (state.screen === 'proses') render();
+    }, step * i));
+  }
+  timers.push(setTimeout(() => { state.screen = 'hasil'; render(); }, step * 4));
+}
+
+stage.addEventListener('click', event => {
+  const target = event.target.closest('[data-act],[data-screen],[data-flash]');
+  if (!target) return;
+
+  if (target.dataset.flash) {
+    state.flash = target.dataset.flash;
+    render();
+    return;
+  }
+  if (target.dataset.screen) {
+    setScreen(target.dataset.screen);
+    return;
+  }
+  switch (target.dataset.act) {
+    case 'capture': startCapture(); break;
+    case 'retry': setScreen('kamera'); break;
+    case 'save': setScreen('arsip'); break;
+    case 'toggle-auto': state.auto = !state.auto; render(); break;
+    case 'noop': break;
+  }
+});
+
+stage.addEventListener('input', event => {
+  if (!event.target.matches('input[type="range"]')) return;
+  state.angle = Number(event.target.value);
+  const out = event.target.closest('.group')?.querySelector('output');
+  if (out) out.textContent = state.angle.toFixed(1) + '°';
+});
+
+const readyToggle = document.getElementById('readyToggle');
+readyToggle.addEventListener('click', () => {
+  state.ready = !state.ready;
+  readyToggle.setAttribute('aria-pressed', String(state.ready));
+  readyToggle.textContent = state.ready ? 'Kondisi: siap' : 'Kondisi: belum siap';
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
