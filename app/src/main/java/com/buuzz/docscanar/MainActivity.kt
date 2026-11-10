@@ -3,6 +3,7 @@ package com.buuzz.docscanar
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -76,9 +77,14 @@ class MainActivity : ComponentActivity() {
                                         ).show()
                                         layar = Layar.Kamera
                                     }.onFailure {
+                                        Log.e("DocScanAR", "gagal simpan PDF", it)
+                                        runCatching {
+                                            File(filesDir, "last-error.txt")
+                                                .writeText(it.stackTraceToString())
+                                        }
                                         Toast.makeText(
                                             this@MainActivity,
-                                            "Gagal menyimpan: ${it.message}",
+                                            "Gagal menyimpan: ${it::class.java.simpleName}: ${it.message}",
                                             Toast.LENGTH_LONG,
                                         ).show()
                                     }

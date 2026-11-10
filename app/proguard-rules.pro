@@ -4,7 +4,9 @@
 
 # PdfBox memakai reflection untuk font dan security handler.
 -keep class com.tom_roush.pdfbox.** { *; }
+-keep class com.tom_roush.fontbox.** { *; }
 -dontwarn com.tom_roush.pdfbox.**
+-dontwarn com.tom_roush.fontbox.**
 
 # BouncyCastle sengaja dikecualikan; PdfBox hanya menyentuhnya untuk PDF terenkripsi.
 -dontwarn org.bouncycastle.**
