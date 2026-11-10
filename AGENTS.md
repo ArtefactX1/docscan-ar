@@ -52,6 +52,7 @@ app/src/main/java/com/buuzz/docscanar/
 - Android native, bukan Flutter/React Native. Sensor ambient light dan overlay AR butuh native.
 - Overlay "AR" memakai sensor fusion, bukan ARCore.
 - `abiFilters` hanya `arm64-v8a`. Menambah ABI lain akan menggandakan ukuran native.
+- OpenCV adalah **build kustom** (`core` + `imgproc`, statis). Kelas Java dari `app/libs/opencv-4.12.0.jar`, native dari `app/src/main/jniLibs/arm64-v8a/libopencv_java4.so`. Jangan kembalikan ke dependensi Maven.
 - ML Kit memakai varian **unbundled** (model diunduh lewat Play Services sekali). Jangan ganti ke `text-recognition` bundled tanpa membahas ukuran APK.
 - BouncyCastle dikecualikan dari PdfBox karena PDF yang dibuat tidak pernah terenkripsi.
 
@@ -65,7 +66,7 @@ app/src/main/java/com/buuzz/docscanar/
 
 ## Jebakan yang sudah pernah kena
 
-- `pointerInput` dengan state yang berubah sebagai key akan me-restart gesture di tengah drag. Pakai `rememberUniqueState`/`rememberUpdatedState` dan kunci ke objek stabil.
+- `pointerInput` dengan state yang berubah sebagai key akan me-restart gesture di tengah drag. Pakai `rememberUpdatedState` dan kunci ke objek stabil.
 - `PreviewView` harus `FIT_CENTER` agar pemetaan koordinat deteksi ke overlay akurat. `FILL_CENTER` memotong gambar dan membuat overlay meleset.
 - `ImageAnalysis` harus `STRATEGY_KEEP_ONLY_LATEST` dan ditutup (`image.close()`) di `finally`.
 - PdfBox butuh `PDFBoxResourceLoader.init(context)` sebelum dipakai.

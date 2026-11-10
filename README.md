@@ -46,15 +46,15 @@ sdk.dir=C\:\\Android\\sdk
 
 ## Ukuran
 
-APK rilis ~26,7 MB. Komposisinya:
+APK rilis ~9,2 MB. Komposisinya:
 
 | Bagian | Ukuran |
 |---|---|
-| OpenCV (`libopencv_java4.so`) | 22,4 MB |
-| dex setelah R8 | 4,4 MB |
+| OpenCV (`libopencv_java4.so`, build kustom) | 6,2 MB |
+| dex setelah R8 | 2,2 MB |
 | aset PdfBox (AFM, glyphlist) | 0,5 MB |
 
-OpenCV adalah sisa terbesar. Menekannya butuh build OpenCV kustom dengan modul `core` + `imgproc` saja (perkiraan 6-8 MB), yang menuntut NDK dan source OpenCV.
+OpenCV dibangun khusus dengan modul `core` + `imgproc` saja, statis, `-Os`, dan `--gc-sections`. Kelas Java-nya diambil dari AAR resmi dan disimpan sebagai `app/libs/opencv-4.12.0.jar`; `.so` ada di `app/src/main/jniLibs/arm64-v8a/`. Jangan ganti ke dependensi Maven `org.opencv:opencv` — itu menambah ~16 MB.
 
 OCR memakai ML Kit varian **unbundled**: model diunduh sekali lewat Play Services saat pemindaian pertama, setelah itu berjalan offline. Ini menghemat ~16 MB dibanding model yang dibundel.
 

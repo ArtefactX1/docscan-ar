@@ -79,7 +79,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.opencv)
+    implementation(files("libs/opencv-4.12.0.jar"))
     implementation(libs.mlkit.text)
     implementation(libs.pdfbox) {
         // BouncyCastle hanya dipakai PdfBox untuk PDF terenkripsi; kita tidak pernah membuatnya.
