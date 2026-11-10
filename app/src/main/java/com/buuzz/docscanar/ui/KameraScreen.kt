@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.buuzz.docscanar.kamera.KameraPreview
+import com.buuzz.docscanar.kamera.SegiLayar
 import com.buuzz.docscanar.kamera.rememberKameraController
 import com.buuzz.docscanar.sensor.Kesiapan
 import com.buuzz.docscanar.sensor.ingatSensorKamera
@@ -59,11 +60,22 @@ import kotlinx.coroutines.delay
 fun KameraScreen(onFoto: (File) -> Unit) {
     val sensor = ingatSensorKamera()
     val controller = rememberKameraController()
+    var segi by remember { mutableStateOf<SegiLayar?>(null) }
+    var detikTerakhir by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(500)
+            if (System.currentTimeMillis() - detikTerakhir > 700) segi = null
+        }
+    }
+
     val siap = Kesiapan.siap(
         sudut = sensor.sudut,
         guncangan = sensor.guncangan,
         berputar = sensor.berputar,
         lux = sensor.lux,
+        adaDokumen = segi != null,
     )
 
     var terkunci by remember { mutableStateOf(false) }
@@ -86,9 +98,13 @@ fun KameraScreen(onFoto: (File) -> Unit) {
                 terkunci = true
                 onFoto(file)
             },
+            onSegi = { hasil ->
+                detikTerakhir = System.currentTimeMillis()
+                segi = hasil
+            },
             modifier = Modifier.fillMaxSize(),
         )
-        PanduanKerataan(siap)
+        PanduanKerataan(siap = siap, segi = segi)
 
         Column(
             modifier = Modifier
@@ -102,9 +118,10 @@ fun KameraScreen(onFoto: (File) -> Unit) {
                 sudut = sensor.sudut,
                 lux = sensor.lux,
                 guncangan = sensor.guncangan || sensor.berputar,
+                adaDokumen = segi != null,
             )
             Spacer(Modifier.weight(1f))
-            StatusKesiapan(siap = siap)
+            StatusKesiapan(siap = siap, adaDokumen = segi != null)
             Spacer(Modifier.height(20.dp))
             KontrolBawah(
                 terkunci = terkunci,
@@ -125,16 +142,35 @@ fun KameraScreen(onFoto: (File) -> Unit) {
 }
 
 @Composable
-private fun PanduanKerataan(siap: Boolean) {
+private fun PanduanKerataan(siap: Boolean, segi: SegiLayar?) {
     val warna = if (siap) Siap else Color.White.copy(alpha = 0.55f)
 
     Canvas(Modifier.fillMaxSize()) {
-        val sudut = listOf(
-            Offset(size.width * 0.14f, size.height * 0.25f),
-            Offset(size.width * 0.86f, size.height * 0.23f),
-            Offset(size.width * 0.90f, size.height * 0.76f),
-            Offset(size.width * 0.11f, size.height * 0.78f),
-        )
+        // Preview memakai FIT_CENTER: koordinat ternormalisasi dipetakan ke kotak
+        // gambar yang benar-benar tampil, bukan seluruh layar.
+        val rasio = segi?.rasio ?: (4f / 3f)
+        val lebarGambar: Float
+        val tinggiGambar: Float
+        if (rasio > size.width / size.height) {
+            lebarGambar = size.width
+            tinggiGambar = size.width / rasio
+        } else {
+            tinggiGambar = size.height
+            lebarGambar = size.height * rasio
+        }
+        val kiri = (size.width - lebarGambar) / 2f
+        val atas = (size.height - tinggiGambar) / 2f
+
+        val sudut = if (segi != null && segi.titik.size == 4) {
+            segi.titik.map { Offset(kiri + it.x * lebarGambar, atas + it.y * tinggiGambar) }
+        } else {
+            listOf(
+                Offset(size.width * 0.14f, size.height * 0.25f),
+                Offset(size.width * 0.86f, size.height * 0.23f),
+                Offset(size.width * 0.90f, size.height * 0.76f),
+                Offset(size.width * 0.11f, size.height * 0.78f),
+            )
+        }
 
         val jalur = Path().apply {
             moveTo(sudut[0].x, sudut[0].y)
@@ -174,7 +210,13 @@ private fun PanduanKerataan(siap: Boolean) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BarisChip(siap: Boolean, sudut: Float, lux: Float?, guncangan: Boolean) {
+private fun BarisChip(
+    siap: Boolean,
+    sudut: Float,
+    lux: Float?,
+    guncangan: Boolean,
+    adaDokumen: Boolean,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
@@ -199,6 +241,12 @@ private fun BarisChip(siap: Boolean, sudut: Float, lux: Float?, guncangan: Boole
         Chip(
             label = "Getar",
             nilai = if (guncangan) "goyah" else "stabil",
+            satuan = null,
+            siap = siap,
+        )
+        Chip(
+            label = "Kertas",
+            nilai = if (adaDokumen) "terdeteksi" else "belum",
             satuan = null,
             siap = siap,
         )
@@ -266,7 +314,7 @@ fun NumText(nilai: String, style: TextStyle, warna: Color) {
 }
 
 @Composable
-private fun StatusKesiapan(siap: Boolean) {
+private fun StatusKesiapan(siap: Boolean, adaDokumen: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -281,7 +329,11 @@ private fun StatusKesiapan(siap: Boolean) {
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = if (siap) "Tahan diam, memotret otomatis" else "Dekatkan ke kertas, hindari bayangan",
+            text = when {
+                siap -> "Tahan diam, memotret otomatis"
+                !adaDokumen -> "Arahkan kamera ke kertas"
+                else -> "Dekatkan ke kertas, hindari bayangan"
+            },
             style = MaterialTheme.typography.labelMedium,
             color = Color.White.copy(alpha = 0.74f),
             textAlign = TextAlign.Center,

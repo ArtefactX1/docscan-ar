@@ -8,9 +8,16 @@ object Kesiapan {
     /**
      * lux null berarti perangkat tidak punya sensor cahaya; jangan blokir capture karenanya.
      */
-    fun siap(sudut: Float, guncangan: Boolean, berputar: Boolean, lux: Float?): Boolean =
+    fun siap(
+        sudut: Float,
+        guncangan: Boolean,
+        berputar: Boolean,
+        lux: Float?,
+        adaDokumen: Boolean = true,
+    ): Boolean =
         sudut <= SUDUT_MAKS &&
             !guncangan &&
             !berputar &&
+            adaDokumen &&
             (lux == null || lux >= LUX_MIN)
 }

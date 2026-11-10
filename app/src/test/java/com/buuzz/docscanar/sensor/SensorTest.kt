@@ -62,4 +62,17 @@ class KesiapanTest {
     fun tanpa_sensor_cahaya_tidak_menghalangi() {
         assertTrue(Kesiapan.siap(sudut = 1f, guncangan = false, berputar = false, lux = null))
     }
+
+    @Test
+    fun tanpa_dokumen_tidak_siap() {
+        assertFalse(
+            Kesiapan.siap(
+                sudut = 1f,
+                guncangan = false,
+                berputar = false,
+                lux = 200f,
+                adaDokumen = false,
+            )
+        )
+    }
 }

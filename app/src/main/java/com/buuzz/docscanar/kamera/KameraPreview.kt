@@ -3,6 +3,7 @@ package com.buuzz.docscanar.kamera
 import android.content.Context
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -15,6 +16,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.buuzz.docscanar.sensor.Kesiapan
 import java.io.File
+import java.util.concurrent.Executors
 import kotlinx.coroutines.delay
 
 class KameraController {
@@ -43,17 +46,33 @@ fun KameraPreview(
     lux: Float?,
     senter: Boolean?,
     onFoto: (File) -> Unit,
+    onSegi: (SegiLayar?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember {
-        PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
+        PreviewView(context).apply { scaleType = PreviewView.ScaleType.FIT_CENTER }
     }
     val imageCapture = remember {
         ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .build()
+    }
+    val imageAnalysis = remember {
+        ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+    }
+    val eksekutor = remember { Executors.newSingleThreadExecutor() }
+    val utama = remember { ContextCompat.getMainExecutor(context) }
+    val onSegiKini by rememberUpdatedState(onSegi)
+
+    DisposableEffect(Unit) {
+        imageAnalysis.setAnalyzer(eksekutor) { image ->
+            AnalisDokumen { segi -> utama.execute { onSegiKini(segi) } }.analyze(image)
+        }
+        onDispose { eksekutor.shutdown() }
     }
 
     var kamera by remember { mutableStateOf<Camera?>(null) }
@@ -96,6 +115,7 @@ fun KameraPreview(
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview,
                     imageCapture,
+                    imageAnalysis,
                 )
             },
             ContextCompat.getMainExecutor(context),

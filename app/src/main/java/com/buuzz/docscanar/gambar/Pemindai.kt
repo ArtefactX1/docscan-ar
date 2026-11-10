@@ -89,10 +89,26 @@ object Pemindai {
 
         val abu = Mat()
         Imgproc.cvtColor(kecil, abu, Imgproc.COLOR_RGBA2GRAY)
-        Imgproc.GaussianBlur(abu, abu, Size(5.0, 5.0), 0.0)
+
+        val segi = cariSegiEmpat(abu) ?: return null
+        val pembesar = bitmap.width.toFloat() / kecil.cols()
+        return UrutSudut.urut(
+            segi.map { Titik(it.x * pembesar, it.y * pembesar) }
+        )
+    }
+
+    /**
+     * Cari segi empat terbesar pada matriks grayscale. Koordinat hasil memakai
+     * skala matriks masukan, bukan bitmap asal.
+     */
+    fun cariSegiEmpat(abu: Mat): List<Titik>? {
+        if (!pastikanOpenCv()) return null
+
+        val halus = Mat()
+        Imgproc.GaussianBlur(abu, halus, Size(5.0, 5.0), 0.0)
 
         val tepi = Mat()
-        Imgproc.Canny(abu, tepi, 50.0, 150.0)
+        Imgproc.Canny(halus, tepi, 50.0, 150.0)
         Imgproc.dilate(
             tepi,
             tepi,
@@ -102,7 +118,7 @@ object Pemindai {
         val kontur = ArrayList<MatOfPoint>()
         Imgproc.findContours(tepi, kontur, Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
 
-        val luasMin = kecil.cols() * kecil.rows() * 0.2
+        val luasMin = abu.cols() * abu.rows() * 0.2
         var terbaik: MatOfPoint? = null
         var luasTerbaik = 0.0
 
@@ -123,10 +139,7 @@ object Pemindai {
         }
 
         val segi = terbaik ?: return null
-        val pembesar = bitmap.width.toFloat() / kecil.cols()
-        return UrutSudut.urut(
-            segi.toList().map { Titik(it.x.toFloat() * pembesar, it.y.toFloat() * pembesar) }
-        )
+        return UrutSudut.urut(segi.toList().map { Titik(it.x.toFloat(), it.y.toFloat()) })
     }
 
     fun luruskan(bitmap: Bitmap, sudut: List<Titik>): Bitmap {
