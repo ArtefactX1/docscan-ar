@@ -25,14 +25,17 @@ Belum ada: arsip dokumen, pencarian teks, ekspor TXT.
 
 ```bash
 ./gradlew assembleDebug
+./gradlew assembleRelease
 ```
 
-APK keluar di `app/build/outputs/apk/debug/app-debug.apk`.
+APK debug keluar di `app/build/outputs/apk/debug/app-debug.apk`, rilis di `app/build/outputs/apk/release/app-release.apk`.
+
+Rilis memakai R8 + resource shrinking dan ditandatangani kunci debug supaya bisa dipasang sendiri. Ganti `signingConfig` sebelum dibagikan.
 
 Pasang ke perangkat:
 
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 Kalau Android SDK belum ada, arahkan lewat `local.properties`:
@@ -40,6 +43,20 @@ Kalau Android SDK belum ada, arahkan lewat `local.properties`:
 ```properties
 sdk.dir=C\:\\Android\\sdk
 ```
+
+## Ukuran
+
+APK rilis ~26,7 MB. Komposisinya:
+
+| Bagian | Ukuran |
+|---|---|
+| OpenCV (`libopencv_java4.so`) | 22,4 MB |
+| dex setelah R8 | 4,4 MB |
+| aset PdfBox (AFM, glyphlist) | 0,5 MB |
+
+OpenCV adalah sisa terbesar. Menekannya butuh build OpenCV kustom dengan modul `core` + `imgproc` saja (perkiraan 6-8 MB), yang menuntut NDK dan source OpenCV.
+
+OCR memakai ML Kit varian **unbundled**: model diunduh sekali lewat Play Services saat pemindaian pertama, setelah itu berjalan offline. Ini menghemat ~16 MB dibanding model yang dibundel.
 
 ## Uji
 

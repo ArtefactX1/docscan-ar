@@ -22,8 +22,33 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            // ponytail: APK rilis ditandatangani kunci debug supaya bisa dipasang
+            // sendiri. Ganti dengan keystore rilis sebelum dibagikan.
+            signingConfig = signingConfigs.getByName("debug")
         }
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/DEPENDENCIES",
+                "/META-INF/LICENSE*",
+                "/META-INF/NOTICE*",
+            )
+        }
+    }
+
+    androidResources {
+        // PdfBox: cmap CJK dan TTF fallback tidak dipakai; kita hanya memakai
+        // Helvetica (standard 14) dengan encoding WinAnsi.
+        ignoreAssetsPatterns += listOf("cmap", "LiberationSans-Regular.ttf")
     }
 
     compileOptions {
@@ -56,7 +81,10 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.opencv)
     implementation(libs.mlkit.text)
-    implementation(libs.pdfbox)
+    implementation(libs.pdfbox) {
+        // BouncyCastle hanya dipakai PdfBox untuk PDF terenkripsi; kita tidak pernah membuatnya.
+        exclude(group = "org.bouncycastle")
+    }
     implementation(libs.coroutines.play.services)
 
     testImplementation(libs.junit)
