@@ -10,15 +10,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.buuzz.docscanar.gambar.Titik
+import com.buuzz.docscanar.ocr.OcrEngine
+import com.buuzz.docscanar.pdf.PdfBuat
 import com.buuzz.docscanar.ui.HasilScreen
 import com.buuzz.docscanar.ui.IzinKamera
 import com.buuzz.docscanar.ui.KameraScreen
 import com.buuzz.docscanar.ui.ProsesScreen
 import com.buuzz.docscanar.ui.theme.DocScanTheme
 import java.io.File
-import java.io.FileOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private sealed interface Layar {
     data object Kamera : Layar
@@ -34,6 +39,8 @@ class MainActivity : ComponentActivity() {
             DocScanTheme {
                 var izinDiberikan by remember { mutableStateOf(false) }
                 var layar by remember { mutableStateOf<Layar>(Layar.Kamera) }
+                var menyimpan by remember { mutableStateOf(false) }
+                val scope = rememberCoroutineScope()
 
                 if (!izinDiberikan) {
                     IzinKamera(onGranted = { izinDiberikan = true })
@@ -53,10 +60,29 @@ class MainActivity : ComponentActivity() {
                         is Layar.Hasil -> HasilScreen(
                             asli = aktif.asli,
                             sudutAwal = aktif.sudut,
+                            menyimpan = menyimpan,
                             onSimpan = { bitmap ->
-                                val file = simpanJpeg(this, bitmap)
-                                Toast.makeText(this, "Tersimpan: ${file.name}", Toast.LENGTH_SHORT).show()
-                                layar = Layar.Kamera
+                                menyimpan = true
+                                scope.launch {
+                                    val hasil = runCatching {
+                                        withContext(Dispatchers.IO) { simpanPdf(this@MainActivity, bitmap) }
+                                    }
+                                    menyimpan = false
+                                    hasil.onSuccess { file ->
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "PDF tersimpan: ${file.name}",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                        layar = Layar.Kamera
+                                    }.onFailure {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Gagal menyimpan: ${it.message}",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                    }
+                                }
                             },
                             onScanUlang = { layar = Layar.Kamera },
                         )
@@ -67,9 +93,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun simpanJpeg(context: Context, bitmap: Bitmap): File {
-    val folder = File(context.filesDir, "scan").apply { mkdirs() }
-    val file = File(folder, "scan_${System.currentTimeMillis()}.jpg")
-    FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+private suspend fun simpanPdf(context: Context, bitmap: Bitmap): File {
+    val baris = OcrEngine.baca(bitmap)
+    val folder = File(context.filesDir, "pdf").apply { mkdirs() }
+    val file = File(folder, "scan_${System.currentTimeMillis()}.pdf")
+    PdfBuat.buat(context, bitmap, baris, file)
     return file
 }

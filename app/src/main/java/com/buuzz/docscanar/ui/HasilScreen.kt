@@ -158,6 +158,7 @@ fun ProsesScreen(
 fun HasilScreen(
     asli: Bitmap,
     sudutAwal: List<Titik>,
+    menyimpan: Boolean = false,
     onSimpan: (Bitmap) -> Unit,
     onScanUlang: () -> Unit,
 ) {
@@ -281,11 +282,11 @@ fun HasilScreen(
                     .heightIn(min = 52.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color(0xFFE7E9EC))
-                    .clickable(enabled = !memproses) { onSimpan(hasil ?: asli) },
+                    .clickable(enabled = !memproses && !menyimpan) { onSimpan(hasil ?: asli) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Simpan",
+                    text = if (menyimpan) "Menyimpan…" else "Simpan PDF",
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,

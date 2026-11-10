@@ -55,6 +55,9 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.opencv)
+    implementation(libs.mlkit.text)
+    implementation(libs.pdfbox)
+    implementation(libs.coroutines.play.services)
 
     testImplementation(libs.junit)
 }

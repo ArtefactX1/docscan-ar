@@ -11,9 +11,9 @@ Fase 1 berjalan sebagian. Yang sudah ada:
 - Deteksi tepi kertas (OpenCV Canny + kontur) dan koreksi perspektif ke rasio A4.
 - Editor sudut manual: geser 4 titik kalau deteksi otomatis meleset.
 - Dua mode hasil: **Asli** (warna dipertahankan) dan **Abu-abu** (bayangan dibuang, siap OCR).
-- Simpan hasil sebagai JPEG di penyimpanan aplikasi.
+- OCR lokal dengan ML Kit, lalu simpan sebagai **PDF searchable** (teks tak terlihat di atas gambar).
 
-Belum ada: OCR, PDF searchable, arsip, pencarian teks.
+Belum ada: arsip dokumen, pencarian teks, ekspor TXT.
 
 ## Kebutuhan
 
@@ -55,6 +55,8 @@ app/src/main/java/com/buuzz/docscanar/
 ├── kamera/KameraPreview.kt  CameraX, auto-capture, torch
 ├── sensor/                  sudut, guncangan, kesiapan, pembacaan sensor
 ├── gambar/                  deteksi tepi, warp perspektif, perbaikan kontras
+├── ocr/OcrEngine.kt         ML Kit text recognition
+├── pdf/PdfBuat.kt           PDF A4 + text layer tak terlihat
 └── ui/                      layar kamera, proses, hasil, izin
 mockup/index.html            mockup HTML statis (referensi visual)
 ```
