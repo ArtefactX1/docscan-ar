@@ -193,7 +193,7 @@ private fun BarisDokumen(dokumen: Dokumen, onBuka: (Dokumen) -> Unit) {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = tanggal(dokumen.dibuat),
+                text = "${dokumen.jumlahHalaman} halaman · ${tanggal(dokumen.dibuat)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = TeksRedup,
             )

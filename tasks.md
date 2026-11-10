@@ -105,8 +105,11 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 - [x] **F5.2.1** Tabel FTS untuk isi OCR
 - [~] **F5.2.2** Layar pencarian dengan sorotan
   - Pencarian FTS jalan; sorotan kata di dalam PDF belum.
-- [ ] **F5.3.1** Gabung halaman ke dokumen
-- [ ] **F5.3.2** Jaga urutan halaman
+- [x] **F5.3.1** Gabung halaman ke dokumen
+- [x] **F5.3.2** Jaga urutan halaman
+  - Naik/turun per halaman, PDF dibangun ulang setiap perubahan.
+- [x] **F5.3.3** Hapus halaman dari dokumen
+  - Tambahan di luar rencana awal.
 - [ ] **F5.4.1** Ekspor PDF lewat SAF
 - [ ] **F5.4.2** Ekspor TXT
 

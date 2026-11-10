@@ -13,8 +13,9 @@ Fase 1 berjalan sebagian. Yang sudah ada:
 - Dua mode hasil: **Asli** (warna dipertahankan) dan **Abu-abu** (bayangan dibuang, siap OCR).
 - OCR lokal dengan ML Kit, lalu simpan sebagai **PDF searchable** (teks tak terlihat di atas gambar).
 - Arsip dokumen dengan thumbnail dan pencarian isi teks (FTS4).
+- Satu dokumen bisa berisi banyak halaman: tambah, urutkan, dan hapus halaman; PDF dibangun ulang otomatis.
 
-Belum ada: gabung halaman, ekspor TXT, pengaturan pemindaian.
+Belum ada: ekspor TXT, pengaturan pemindaian.
 
 ## Kebutuhan
 

@@ -14,48 +14,51 @@ import com.tom_roush.pdfbox.pdmodel.graphics.state.RenderingMode
 import java.io.ByteArrayOutputStream
 import java.io.File
 
+data class HalamanPdf(val gambar: Bitmap, val baris: List<BarisOcr>)
+
 object PdfBuat {
     private var siap = false
 
-    fun buat(context: Context, halaman: Bitmap, baris: List<BarisOcr>, file: File) {
+    fun buat(context: Context, halaman: List<HalamanPdf>, file: File) {
         if (!siap) {
             PDFBoxResourceLoader.init(context.applicationContext)
             siap = true
         }
 
-        val jpeg = ByteArrayOutputStream().use { aliran ->
-            halaman.compress(Bitmap.CompressFormat.JPEG, 92, aliran)
-            aliran.toByteArray()
-        }
-
         PDDocument().use { dokumen ->
-            val halamanPdf = PDPage(PDRectangle.A4)
-            dokumen.addPage(halamanPdf)
+            halaman.forEach { h ->
+                val halamanPdf = PDPage(PDRectangle.A4)
+                dokumen.addPage(halamanPdf)
 
-            val gambar = PDImageXObject.createFromByteArray(dokumen, jpeg, "halaman")
+                val jpeg = ByteArrayOutputStream().use { aliran ->
+                    h.gambar.compress(Bitmap.CompressFormat.JPEG, 92, aliran)
+                    aliran.toByteArray()
+                }
+                val gambar = PDImageXObject.createFromByteArray(dokumen, jpeg, "halaman")
 
-            PDPageContentStream(dokumen, halamanPdf).use { konten ->
-                konten.drawImage(gambar, 0f, 0f, PDRectangle.A4.width, PDRectangle.A4.height)
+                PDPageContentStream(dokumen, halamanPdf).use { konten ->
+                    konten.drawImage(gambar, 0f, 0f, PDRectangle.A4.width, PDRectangle.A4.height)
 
-                // Teks tak terlihat: bisa dicari dan disalin, tidak menutupi gambar.
-                konten.setRenderingMode(RenderingMode.NEITHER)
+                    // Teks tak terlihat: bisa dicari dan disalin, tidak menutupi gambar.
+                    konten.setRenderingMode(RenderingMode.NEITHER)
 
-                val skalaX = PDRectangle.A4.width / halaman.width
-                val skalaY = PDRectangle.A4.height / halaman.height
+                    val skalaX = PDRectangle.A4.width / h.gambar.width
+                    val skalaY = PDRectangle.A4.height / h.gambar.height
 
-                baris.forEach { b ->
-                    val teks = bersihkan(b.teks)
-                    if (teks.isEmpty()) return@forEach
+                    h.baris.forEach { b ->
+                        val teks = bersihkan(b.teks)
+                        if (teks.isEmpty()) return@forEach
 
-                    val tinggi = ((b.bawah - b.atas) * skalaY * 0.8f).coerceIn(4f, 24f)
-                    konten.beginText()
-                    konten.setFont(PDType1Font.HELVETICA, tinggi)
-                    konten.newLineAtOffset(
-                        b.kiri * skalaX,
-                        PDRectangle.A4.height - b.bawah * skalaY,
-                    )
-                    konten.showText(teks)
-                    konten.endText()
+                        val tinggi = ((b.bawah - b.atas) * skalaY * 0.8f).coerceIn(4f, 24f)
+                        konten.beginText()
+                        konten.setFont(PDType1Font.HELVETICA, tinggi)
+                        konten.newLineAtOffset(
+                            b.kiri * skalaX,
+                            PDRectangle.A4.height - b.bawah * skalaY,
+                        )
+                        konten.showText(teks)
+                        konten.endText()
+                    }
                 }
             }
 
