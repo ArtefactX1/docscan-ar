@@ -9,6 +9,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +62,7 @@ class MainActivity : ComponentActivity() {
                 var kueri by remember { mutableStateOf("") }
                 var dokumen by remember { mutableStateOf<Dokumen?>(null) }
                 var halaman by remember { mutableStateOf<List<Halaman>>(emptyList()) }
+                var galat by remember { mutableStateOf<String?>(null) }
                 val scope = rememberCoroutineScope()
 
                 LaunchedEffect(layar, kueri) {
@@ -117,15 +122,12 @@ class MainActivity : ComponentActivity() {
                                         layar = Layar.Dokumen(id)
                                     }.onFailure {
                                         Log.e("DocScanAR", "gagal simpan halaman", it)
+                                        val jejak = it.stackTraceToString()
                                         runCatching {
-                                            File(filesDir, "last-error.txt")
-                                                .writeText(it.stackTraceToString())
+                                            File(getExternalFilesDir(null), "last-error.txt")
+                                                .writeText(jejak)
                                         }
-                                        Toast.makeText(
-                                            this@MainActivity,
-                                            "Gagal menyimpan: ${it::class.java.simpleName}: ${it.message}",
-                                            Toast.LENGTH_LONG,
-                                        ).show()
+                                        galat = jejak
                                     }
                                 }
                             },
@@ -180,6 +182,22 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                }
+
+                galat?.let { teks ->
+                    AlertDialog(
+                        onDismissRequest = { galat = null },
+                        title = { Text("Gagal menyimpan") },
+                        text = {
+                            Text(
+                                text = teks.take(1500),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { galat = null }) { Text("Tutup") }
+                        },
+                    )
                 }
             }
         }
