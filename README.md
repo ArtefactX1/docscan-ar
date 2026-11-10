@@ -12,8 +12,9 @@ Fase 1 berjalan sebagian. Yang sudah ada:
 - Editor sudut manual: geser 4 titik kalau deteksi otomatis meleset.
 - Dua mode hasil: **Asli** (warna dipertahankan) dan **Abu-abu** (bayangan dibuang, siap OCR).
 - OCR lokal dengan ML Kit, lalu simpan sebagai **PDF searchable** (teks tak terlihat di atas gambar).
+- Arsip dokumen dengan thumbnail dan pencarian isi teks (FTS4).
 
-Belum ada: arsip dokumen, pencarian teks, ekspor TXT.
+Belum ada: gabung halaman, ekspor TXT, pengaturan pemindaian.
 
 ## Kebutuhan
 

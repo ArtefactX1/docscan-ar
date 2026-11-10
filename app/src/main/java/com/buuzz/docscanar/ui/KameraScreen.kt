@@ -57,7 +57,7 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
-fun KameraScreen(onFoto: (File) -> Unit) {
+fun KameraScreen(onFoto: (File) -> Unit, onArsip: () -> Unit) {
     val sensor = ingatSensorKamera()
     val controller = rememberKameraController()
     var segi by remember { mutableStateOf<SegiLayar?>(null) }
@@ -112,6 +112,27 @@ fun KameraScreen(onFoto: (File) -> Unit) {
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 16.dp),
         ) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xB8141618))
+                        .border(1.dp, Color.White.copy(alpha = 0.24f), RoundedCornerShape(50))
+                        .clickable(onClick = onArsip)
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                ) {
+                    Text(
+                        text = "Arsip",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFFEDEFF2),
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
             BarisChip(
                 siap = siap,

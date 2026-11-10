@@ -94,17 +94,17 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 ### F4.3 Simpan Dokumen
 
 - [x] **F4.3.1** Tulis PDF ke penyimpanan aplikasi
-- [ ] **F4.3.2** Catat metadata ke Room
-- [ ] **F4.3.3** Bersihkan file sementara setelah simpan
+- [x] **F4.3.2** Catat metadata ke SQLite
+  - Memakai `SQLiteOpenHelper` langsung, bukan Room: satu tabel, tanpa generator.
+- [x] **F4.3.3** Bersihkan file sementara setelah simpan
 
 ## F5. Arsip & Cari Teks
 
-Belum dimulai.
-
-- [ ] **F5.1.1** Query arsip ke daftar
-- [ ] **F5.1.2** Thumbnail halaman pertama
-- [ ] **F5.2.1** Tabel FTS untuk isi OCR
-- [ ] **F5.2.2** Layar pencarian dengan sorotan
+- [x] **F5.1.1** Query arsip ke daftar
+- [x] **F5.1.2** Thumbnail halaman pertama
+- [x] **F5.2.1** Tabel FTS untuk isi OCR
+- [~] **F5.2.2** Layar pencarian dengan sorotan
+  - Pencarian FTS jalan; sorotan kata di dalam PDF belum.
 - [ ] **F5.3.1** Gabung halaman ke dokumen
 - [ ] **F5.3.2** Jaga urutan halaman
 - [ ] **F5.4.1** Ekspor PDF lewat SAF
