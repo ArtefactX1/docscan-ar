@@ -10,12 +10,16 @@ Fase 1 berjalan sebagian. Yang sudah ada:
 - Auto-capture saat sudut ≤2°, HP stabil 500 ms, dan cahaya cukup.
 - Deteksi tepi kertas (OpenCV Canny + kontur) dan koreksi perspektif ke rasio A4.
 - Editor sudut manual: geser 4 titik kalau deteksi otomatis meleset.
-- Dua mode hasil: **Asli** (warna dipertahankan) dan **Abu-abu** (bayangan dibuang, siap OCR).
+- Dua mode hasil: **Asli** (warna dipertahankan), **Abu-grey** (bayangan dibuang, siap OCR), **Hitam-putih** (adaptive threshold), dan **Linear** (kontras diregangkan).
 - OCR lokal dengan ML Kit, lalu simpan sebagai **PDF searchable** (teks tak terlihat di atas gambar).
+- Lima bahasa OCR: Latin, Tionghoa, Jepang, Korea, Devanagari. Orientasi halaman diperbaiki otomatis kalau teks awal terlalu sedikit.
+- Nama dokumen otomatis mengikuti jenisnya (struk, faktur, KTP, resi) dari kata kunci di halaman pertama.
 - Arsip dokumen dengan thumbnail dan pencarian isi teks (FTS4).
 - Satu dokumen bisa berisi banyak halaman: tambah, urutkan, dan hapus halaman; PDF dibangun ulang otomatis.
+- Ekspor PDF dan TXT lewat SAF.
+- Pengaturan ambang sudut, mode senter, dan bahasa OCR, tersimpan antar sesi.
 
-Belum ada: ekspor TXT, pengaturan pemindaian.
+Belum ada: mode enhancement tambahan, deteksi orientasi dokumen (lihat F7).
 
 ## Kebutuhan
 
@@ -69,7 +73,7 @@ OCR memakai ML Kit varian **unbundled**: model diunduh sekali lewat Play Service
 ## Struktur
 
 ```
-app/src/main/java/com/buuzz/docscanar/
+app/src/main/java/com/zacky/docar/
 ├── MainActivity.kt          navigasi kamera → proses → hasil
 ├── kamera/KameraPreview.kt  CameraX, auto-capture, torch
 ├── sensor/                  sudut, guncangan, kesiapan, pembacaan sensor

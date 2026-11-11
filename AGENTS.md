@@ -20,13 +20,14 @@ Android SDK di `C:\Android\sdk` (lihat `local.properties`). JDK 17+.
 ## Struktur
 
 ```
-app/src/main/java/com/buuzz/docscanar/
+app/src/main/java/com/zacky/docar/
 ├── MainActivity.kt        navigasi: Kamera → Proses → Hasil
 ├── kamera/                CameraX preview, capture, analisis frame realtime
 ├── sensor/                sudut, guncangan, kesiapan, pembacaan sensor
 ├── gambar/                OpenCV: deteksi tepi, warp, perbaikan kontras
 ├── ocr/                   ML Kit text recognition
 ├── pdf/                   PdfBox: PDF A4 + text layer invisible
+├── data/                  SQLite, repositori, preferensi pemindaian
 └── ui/                    layar Compose
 ```
 
@@ -70,3 +71,4 @@ app/src/main/java/com/buuzz/docscanar/
 - `PreviewView` harus `FIT_CENTER` agar pemetaan koordinat deteksi ke overlay akurat. `FILL_CENTER` memotong gambar dan membuat overlay meleset.
 - `ImageAnalysis` harus `STRATEGY_KEEP_ONLY_LATEST` dan ditutup (`image.close()`) di `finally`.
 - PdfBox butuh `PDFBoxResourceLoader.init(context)` sebelum dipakai.
+- Jangan mengecualikan `LiberationSans-Regular.ttf` lewat `ignoreAssetsPatterns`. `PDType1Font.<clinit>` memuatnya lewat `FontMappers` sebelum Helvetica dipakai; tanpa aset itu simpan PDF gagal dengan `FileNotFoundException`. Hanya `cmap` yang boleh dikecualikan.

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.buuzz.docscanar"
+    namespace = "com.zacky.docar"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.buuzz.docscanar"
+        applicationId = "com.zacky.docar"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -46,9 +46,9 @@ android {
     }
 
     androidResources {
-        // PdfBox: cmap CJK dan TTF fallback tidak dipakai; kita hanya memakai
-        // Helvetica (standard 14) dengan encoding WinAnsi.
-        ignoreAssetsPatterns += listOf("cmap", "LiberationSans-Regular.ttf")
+        // PdfBox: cmap CJK tidak dipakai. LiberationSans tetap dibutuhkan karena
+        // PDType1Font.<clinit> memuatnya lewat FontMappers sebelum Helvetica dipakai.
+        ignoreAssetsPatterns += listOf("cmap")
     }
 
     compileOptions {
@@ -81,6 +81,10 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(files("libs/opencv-4.12.0.jar"))
     implementation(libs.mlkit.text)
+    implementation(libs.mlkit.text.chinese)
+    implementation(libs.mlkit.text.japanese)
+    implementation(libs.mlkit.text.korean)
+    implementation(libs.mlkit.text.devanagari)
     implementation(libs.pdfbox) {
         // BouncyCastle hanya dipakai PdfBox untuk PDF terenkripsi; kita tidak pernah membuatnya.
         exclude(group = "org.bouncycastle")

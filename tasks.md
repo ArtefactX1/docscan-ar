@@ -28,8 +28,10 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 ### F1.3 Nilai Cahaya & Bayangan
 
 - [x] **F1.3.1** Ambient light sensor
-- [ ] **F1.3.2** Kecerahan rata-rata dari frame kamera
-- [ ] **F1.3.3** Deteksi bayangan kiri-kanan dari frame
+- [x] **F1.3.2** Kecerahan rata-rata dari frame kamera
+  - Rata-rata bidang Y, dipakai sebagai syarat tambahan dan cadangan saat tidak ada sensor cahaya.
+- [x] **F1.3.3** Deteksi bayangan kiri-kanan dari frame
+  - Selisih rata-rata sepertiga kiri dan kanan; tampil di chip Cahaya, tidak memblokir capture.
 - [x] **F1.3.4** HUD status
 
 ## F2. Auto-Capture Presisi
@@ -37,13 +39,14 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 ### F2.1 Syarat Auto-Capture
 
 - [x] **F2.1.1** Ambang dan fungsi `siap`
+  - Status bertingkat SEARCH/CLOSER/DO_NOT_MOVE/SIAP; butuh 3 frame stabil berturut.
 - [x] **F2.1.2** Wajib bertahan 500 ms
 
 ### F2.2 Ambil Foto Otomatis
 
 - [x] **F2.2.1** ImageCapture saat syarat lolos
-- [~] **F2.2.2** Kunci capture dan animasi flash
-  - Kunci dan teks "Terkunci" ada; animasi flash belum.
+- [x] **F2.2.2** Kunci capture dan animasi flash
+  - Kilat putih 320 ms saat capture; teks "Terkunci" tetap ada.
 - [x] **F2.2.3** Torch otomatis saat redup
   - Ditambah tombol siklus auto/nyala/mati.
 
@@ -60,7 +63,7 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 - [x] **F3.1.2** Kontur segi empat terbesar
 - [x] **F3.1.3** Tolak kontur tidak wajar
 - [x] **F3.1.4** Deteksi realtime pada frame kamera
-  - Tambahan di luar rencana awal.
+  - Tambahan di luar rencana awal. Quad dihaluskan antar frame (EMA, IoU ≥0,6) dan quad merosot ditolak.
 
 ### F3.2 Koreksi Perspektif
 
@@ -71,8 +74,8 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 
 ### F3.3 Perjelas Teks
 
-- [~] **F3.3.1** Adaptive threshold dan unsharp mask
-  - Memakai CLAHE, bukan unsharp mask.
+- [x] **F3.3.1** Adaptive threshold dan unsharp mask
+  - Memakai CLAHE + unsharp mask. Adaptive threshold tidak dipakai karena mode Abu-abu harus tetap grayscale.
 - [x] **F3.3.2** Hapus bayangan lewat estimasi background
 - [x] **F3.3.3** Mode Asli dan Abu-abu
   - Tambahan di luar rencana awal.
@@ -89,7 +92,8 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 
 - [x] **F4.2.1** Render halaman dari bitmap
 - [x] **F4.2.2** Text layer invisible
-- [ ] **F4.2.3** Isi metadata dokumen
+- [x] **F4.2.3** Isi metadata dokumen
+  - Judul dari nama dokumen, author/creator "DocScan AR", tanggal dibuat.
 
 ### F4.3 Simpan Dokumen
 
@@ -103,26 +107,41 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 - [x] **F5.1.1** Query arsip ke daftar
 - [x] **F5.1.2** Thumbnail halaman pertama
 - [x] **F5.2.1** Tabel FTS untuk isi OCR
-- [~] **F5.2.2** Layar pencarian dengan sorotan
-  - Pencarian FTS jalan; sorotan kata di dalam PDF belum.
+- [x] **F5.2.2** Layar pencarian dengan sorotan
+  - Kata kueri disorot di daftar halaman; ekspor PDF saat kueri aktif menambahkan kotak kuning di baris yang cocok.
 - [x] **F5.3.1** Gabung halaman ke dokumen
 - [x] **F5.3.2** Jaga urutan halaman
   - Naik/turun per halaman, PDF dibangun ulang setiap perubahan.
 - [x] **F5.3.3** Hapus halaman dari dokumen
   - Tambahan di luar rencana awal.
-- [ ] **F5.4.1** Ekspor PDF lewat SAF
-- [ ] **F5.4.2** Ekspor TXT
+- [x] **F5.4.1** Ekspor PDF lewat SAF
+- [x] **F5.4.2** Ekspor TXT
 
 ## F6. Pengaturan Pemindaian
 
-Belum dimulai.
+- [x] **F6.1.1** Slider ambang sudut
+- [x] **F6.1.2** Pakai nilai tersimpan di mesin kesiapan
+  - Disimpan di SharedPreferences lewat `data/Pengaturan.kt`.
+- [x] **F6.2.1** Pilihan mode flash
+- [x] **F6.2.2** Terapkan mode flash saat capture
+  - Mode otomatis/nyala/mati mengatur torch; tersimpan antar sesi.
+- [x] **F6.3.1** Daftar bahasa OCR
+  - Latin, Tionghoa, Jepang, Korea, Devanagari. Empat model tambahan memakai artefak ML Kit unbundled (masing-masing ±0,1 MB di APK, model diunduh Play Services).
+- [x] **F6.3.2** Unduh model bahasa tambahan
+  - Tombol "Siapkan model" menjalankan satu frame kosong lewat klien bahasa terpilih; ML Kit tidak punya API pra-unduh untuk text recognition.
 
-- [ ] **F6.1.1** Slider ambang sudut
-- [ ] **F6.1.2** Pakai nilai tersimpan di mesin kesiapan
-- [ ] **F6.2.1** Pilihan mode flash
-- [ ] **F6.2.2** Terapkan mode flash saat capture
-- [ ] **F6.3.1** Daftar bahasa OCR
-- [ ] **F6.3.2** Unduh model bahasa tambahan
+## F7. Ide dari CamScanner
+
+Hasil bedah APK CamScanner 7.28.5 (`com.intsig.camscanner`). Deteksi tepi mereka memakai native `libpagescanner.so` (`PageScanner.DetectFrameBorder` / `DetectCurveBorderYUV`), bukan OpenCV. Yang bisa ditiru tanpa library proprietary:
+
+- [x] **F7.1.1** Mode Hitam-putih (`adaptiveThreshold`) dan Linear (contrast stretch)
+  - Empat mode: Asli, Abu (CLAHE + unsharp), Hitam (adaptive threshold), Linear (min-max).
+- [x] **F7.1.2** Deteksi orientasi dokumen 0/90/180/270 dari baris OCR, putar sebelum simpan
+  - Kalau OCR awal < 20 karakter, tiga rotasi lain dicoba pada versi 480 px; yang paling banyak teks dipakai lalu OCR diulang pada bitmap final.
+- [x] **F7.2.1** Multi-kandidat quad: ambil 3 kontur teratas, pilih IoU tertinggi terhadap frame sebelumnya
+- [ ] **F7.3.1** Curve dewarp halaman buku (`Imgproc.remap` per kolom)
+- [x] **F7.4.1** Klasifikasi jenis dokumen dari teks OCR (struk, faktur, KTP) untuk penamaan otomatis
+  - Pencocokan kata kunci, bukan model. Halaman pertama yang dikenali mengganti nama "Scan …" jadi "Struk …", "Faktur …", dan seterusnya.
 
 ## Catatan
 
