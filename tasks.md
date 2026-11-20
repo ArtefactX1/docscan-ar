@@ -82,7 +82,9 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
   - Memakai CLAHE + unsharp mask. Adaptive threshold tidak dipakai karena mode Abu-abu harus tetap grayscale.
 - [x] **F3.3.2** Hapus bayangan lewat estimasi background
 - [x] **F3.3.3** Mode Asli dan Abu-abu
-  - Tambahan di luar rencana awal.
+  - Tambahan di luar rencana awal. Berkembang jadi empat mode (Asli, Abu, Hitam, Linear) lewat F7.
+- [x] **F3.3.4** Preview filter async ala PdfCraft `ScanScreen`
+  - Debounce 120 ms dibuang; preview lama tetap tampil, `LaunchedEffect` membatalkan job lama, spinner hijau di pojok kanan atas.
 
 ## F4. OCR & PDF Searchable
 

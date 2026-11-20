@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,11 +60,11 @@ import com.zacky.docar.gambar.Titik
 import com.zacky.docar.ui.theme.Garis
 import com.zacky.docar.ui.theme.Latar
 import com.zacky.docar.ui.theme.Peringatan
+import com.zacky.docar.ui.theme.Siap
 import com.zacky.docar.ui.theme.Teks
 import com.zacky.docar.ui.theme.TeksRedup
 import java.io.File
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -169,10 +170,12 @@ fun HasilScreen(
     var hasil by remember { mutableStateOf<Bitmap?>(null) }
     var memproses by remember { mutableStateOf(false) }
 
+    // Preview lama tetap tampil selama yang baru dibuat, seperti ScanScreen PdfCraft.
+    // LaunchedEffect membatalkan sendiri job lama saat sudut/warna berubah.
     LaunchedEffect(sudut, warna) {
         memproses = true
-        delay(120)
-        hasil = withContext(Dispatchers.Default) { Pemindai.rapikan(asli, sudut, warna) }
+        val keluaran = withContext(Dispatchers.Default) { Pemindai.rapikan(asli, sudut, warna) }
+        hasil = keluaran
         memproses = false
     }
 
@@ -239,6 +242,17 @@ fun HasilScreen(
                         onSudut = { sudut = it },
                     )
                 }
+            }
+
+            if (memproses) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(24.dp),
+                    color = Siap,
+                    strokeWidth = 2.dp,
+                )
             }
         }
 
