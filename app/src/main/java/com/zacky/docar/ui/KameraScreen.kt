@@ -74,17 +74,9 @@ fun KameraScreen(
     val controller = rememberKameraController()
     var segi by remember { mutableStateOf<SegiLayar?>(null) }
     val segiKini by rememberUpdatedState(segi)
-    var detikTerakhir by remember { mutableStateOf(0L) }
     var terangFrame by remember { mutableStateOf<Float?>(null) }
     val terangKini by rememberUpdatedState(terangFrame)
     var bayangan by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(500)
-            if (System.currentTimeMillis() - detikTerakhir > 700) segi = null
-        }
-    }
 
     val sudutMaksKini by rememberUpdatedState(sudutMaks)
     val guncanganKini by rememberUpdatedState(sensor.guncangan)
@@ -148,7 +140,6 @@ fun KameraScreen(
                 onFoto(file)
             },
             onSegi = { hasil ->
-                detikTerakhir = System.currentTimeMillis()
                 segi = hasil
             },
             onCahaya = { terang, adaBayangan ->

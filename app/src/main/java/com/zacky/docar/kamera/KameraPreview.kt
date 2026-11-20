@@ -69,11 +69,15 @@ fun KameraPreview(
     val utama = remember { ContextCompat.getMainExecutor(context) }
     val onSegiKini by rememberUpdatedState(onSegi)
     val onCahayaKini by rememberUpdatedState(onCahaya)
+    val penyangga = remember { PenyanggaDeteksi() }
 
     DisposableEffect(Unit) {
         imageAnalysis.setAnalyzer(eksekutor) { image ->
             AnalisDokumen(
-                onSegi = { segi -> utama.execute { onSegiKini(segi) } },
+                onSegi = { segi ->
+                    val ditahan = penyangga.terima(segi)
+                    utama.execute { onSegiKini(ditahan) }
+                },
                 onCahaya = { terang, bayangan ->
                     utama.execute { onCahayaKini(terang, bayangan) }
                 },
