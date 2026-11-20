@@ -50,7 +50,12 @@ import kotlinx.coroutines.withContext
 private sealed interface Layar {
     data class Kamera(val target: Long?) : Layar
     data class Proses(val file: File, val target: Long?) : Layar
-    data class Hasil(val asli: Bitmap, val sudut: List<Titik>, val target: Long?) : Layar
+    data class Hasil(
+        val asli: Bitmap,
+        val sudut: List<Titik>,
+        val ditemukan: List<Titik>?,
+        val target: Long?,
+    ) : Layar
     data object Arsip : Layar
     data object Setelan : Layar
     data class Dokumen(val id: Long) : Layar
@@ -153,8 +158,8 @@ class MainActivity : ComponentActivity() {
 
                         is Layar.Proses -> ProsesScreen(
                             file = aktif.file,
-                            onSelesai = { asli, sudut ->
-                                layar = Layar.Hasil(asli, sudut, aktif.target)
+                            onSelesai = { asli, sudut, ditemukan ->
+                                layar = Layar.Hasil(asli, sudut, ditemukan, aktif.target)
                             },
                             onGagal = {
                                 Toast.makeText(this, "Foto gagal dibaca", Toast.LENGTH_SHORT).show()
@@ -165,6 +170,7 @@ class MainActivity : ComponentActivity() {
                         is Layar.Hasil -> HasilScreen(
                             asli = aktif.asli,
                             sudutAwal = aktif.sudut,
+                            ditemukan = aktif.ditemukan,
                             menyimpan = menyimpan,
                             onSimpan = { bitmap ->
                                 menyimpan = true

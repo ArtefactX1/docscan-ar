@@ -64,6 +64,10 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 - [x] **F3.1.3** Tolak kontur tidak wajar
 - [x] **F3.1.4** Deteksi realtime pada frame kamera
   - Tambahan di luar rencana awal. Quad dihaluskan antar frame (EMA, IoU ≥0,6) dan quad merosot ditolak.
+- [x] **F3.1.5** Deteksi pasca-capture resolusi penuh sebagai sumber kebenaran
+  - Realtime hanya untuk overlay; crop awal memakai deteksi pada bitmap ≤2000 px tanpa downsample 1000 px, multi-kandidat.
+- [x] **F3.1.6** Guard quad konveks + Auto-detect / Seluruh foto
+  - Ide dari PdfCraft `ScanCrop`: `found` disimpan terpisah dari `corners`, drag yang bikin cekung ditolak, tombol Auto-detect mengembalikan hasil engine.
 
 ### F3.2 Koreksi Perspektif
 

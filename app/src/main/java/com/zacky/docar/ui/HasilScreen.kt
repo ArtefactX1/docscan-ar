@@ -69,7 +69,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ProsesScreen(
     file: File,
-    onSelesai: (Bitmap, List<Titik>) -> Unit,
+    onSelesai: (Bitmap, List<Titik>, List<Titik>?) -> Unit,
     onGagal: () -> Unit,
 ) {
     var tahap by remember { mutableIntStateOf(0) }
@@ -81,12 +81,12 @@ fun ProsesScreen(
             return@LaunchedEffect
         }
         tahap = 1
-        val sudut = withContext(Dispatchers.Default) { Pemindai.cariTepi(asli) }
-            ?: Pemindai.sudutCadangan(asli.width, asli.height)
+        val ditemukan = withContext(Dispatchers.Default) { Pemindai.cariTepi(asli) }
+        val sudut = ditemukan ?: Pemindai.sudutCadangan(asli.width, asli.height)
         tahap = 2
         withContext(Dispatchers.Default) { Pemindai.rapikan(asli, sudut, ModeWarna.ABU) }
         tahap = 4
-        onSelesai(asli, sudut)
+        onSelesai(asli, sudut, ditemukan)
     }
 
     val langkah = listOf("Memotong tepi", "Meluruskan perspektif", "Memperjelas teks", "Membaca teks")
@@ -158,6 +158,7 @@ fun ProsesScreen(
 fun HasilScreen(
     asli: Bitmap,
     sudutAwal: List<Titik>,
+    ditemukan: List<Titik>?,
     menyimpan: Boolean = false,
     onSimpan: (Bitmap) -> Unit,
     onScanUlang: () -> Unit,
@@ -245,10 +246,33 @@ fun HasilScreen(
 
         if (ubahSudut) {
             Text(
-                text = "Geser titik hijau ke sudut kertas. Tarik di mana saja untuk memindahkan titik terdekat.",
+                text = "Geser titik hijau ke sudut kertas. Quad cekung ditolak otomatis.",
                 style = MaterialTheme.typography.labelSmall,
                 color = TeksRedup,
             )
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PilihanWarna(
+                    teks = "Auto-detect",
+                    aktif = false,
+                    onClick = { ditemukan?.let { sudut = it } },
+                    modifier = Modifier.weight(1f),
+                    aktifkan = ditemukan != null,
+                )
+                PilihanWarna(
+                    teks = "Seluruh foto",
+                    aktif = false,
+                    onClick = {
+                        sudut = listOf(
+                            Titik(0f, 0f),
+                            Titik(asli.width.toFloat(), 0f),
+                            Titik(asli.width.toFloat(), asli.height.toFloat()),
+                            Titik(0f, asli.height.toFloat()),
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
             Spacer(Modifier.height(8.dp))
         }
 
@@ -336,6 +360,7 @@ private fun PilihanWarna(
     aktif: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    aktifkan: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -343,13 +368,17 @@ private fun PilihanWarna(
             .clip(RoundedCornerShape(12.dp))
             .background(if (aktif) Color(0xFFE7E9EC) else Color(0xFF141416))
             .border(1.dp, if (aktif) Color.Transparent else Garis, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
+            .clickable(enabled = aktifkan, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = teks,
             style = MaterialTheme.typography.labelMedium,
-            color = if (aktif) Latar else Teks,
+            color = when {
+                !aktifkan -> TeksRedup.copy(alpha = 0.4f)
+                aktif -> Latar
+                else -> Teks
+            },
             textAlign = TextAlign.Center,
         )
     }
@@ -401,7 +430,8 @@ private fun SudutEditor(
                             (lama.x + jarak.x / skala).coerceIn(0f, asli.width.toFloat()),
                             (lama.y + jarak.y / skala).coerceIn(0f, asli.height.toFloat()),
                         )
-                        onSudutKini(sudutKini.toMutableList().also { it[i] = baru })
+                        val usulan = sudutKini.toMutableList().also { it[i] = baru }
+                        if (Pemindai.konveks(usulan)) onSudutKini(usulan)
                     },
                 )
             },

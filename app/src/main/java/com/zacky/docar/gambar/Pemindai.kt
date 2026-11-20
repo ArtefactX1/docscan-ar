@@ -73,28 +73,20 @@ object Pemindai {
         )
     }
 
+    /**
+     * Deteksi pasca-capture: grayscale pada bitmap hasil baca (≤2000 px), tanpa
+     * downsample tambahan. Realtime memakai jalur `AnalisDokumen` yang sengaja
+     * lebih kecil; di sini akurasi lebih penting daripada kecepatan.
+     */
     fun cariTepi(bitmap: Bitmap): List<Titik>? {
         if (!pastikanOpenCv()) return null
 
-        val asli = Mat()
-        Utils.bitmapToMat(bitmap, asli)
-
-        val faktor = 1000.0 / maxOf(asli.cols(), asli.rows())
-        val kecil = Mat()
-        if (faktor < 1.0) {
-            Imgproc.resize(asli, kecil, Size(asli.cols() * faktor, asli.rows() * faktor))
-        } else {
-            asli.copyTo(kecil)
-        }
-
+        val rgba = Mat()
+        Utils.bitmapToMat(bitmap, rgba)
         val abu = Mat()
-        Imgproc.cvtColor(kecil, abu, Imgproc.COLOR_RGBA2GRAY)
+        Imgproc.cvtColor(rgba, abu, Imgproc.COLOR_RGBA2GRAY)
 
-        val segi = cariSegiEmpat(abu) ?: return null
-        val pembesar = bitmap.width.toFloat() / kecil.cols()
-        return UrutSudut.urut(
-            segi.map { Titik(it.x * pembesar, it.y * pembesar) }
-        )
+        return cariSegiEmpatKandidat(abu, 3).firstOrNull()
     }
 
     /**
@@ -271,6 +263,26 @@ object Pemindai {
         if (bitmap.width <= lebar) return bitmap
         val tinggi = (lebar.toFloat() * bitmap.height / bitmap.width).toInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(bitmap, lebar, tinggi, true)
+    }
+
+    /** Quad harus konveks dan searah; drag yang bikin cekung ditolak. */
+    fun konveks(t: List<Titik>): Boolean {
+        if (t.size != 4) return false
+        var tanda = 0
+        for (i in 0 until 4) {
+            val a = t[i]
+            val b = t[(i + 1) % 4]
+            val c = t[(i + 2) % 4]
+            val silang = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x)
+            val s = when {
+                silang > 1e-4f -> 1
+                silang < -1e-4f -> -1
+                else -> return false
+            }
+            if (tanda != 0 && s != tanda) return false
+            tanda = s
+        }
+        return true
     }
 
     private fun luasSegi(t: List<Titik>): Float {
