@@ -78,28 +78,24 @@ fun KameraScreen(
     val terangKini by rememberUpdatedState(terangFrame)
     var bayangan by remember { mutableStateOf(false) }
 
-    val sudutMaksKini by rememberUpdatedState(sudutMaks)
     val guncanganKini by rememberUpdatedState(sensor.guncangan)
     val berputarKini by rememberUpdatedState(sensor.berputar)
     val luxKini by rememberUpdatedState(sensor.lux)
-    val sudutKini by rememberUpdatedState(sensor.sudut)
 
     val mesin = remember { MesinCapture() }
     var status by remember { mutableStateOf(StatusCapture.SEARCH) }
 
     // Auto-capture dihitung berkala, bukan hanya saat state berubah: kalau segi
     // null terus-menerus dan sensor stabil, effect berbasis key tidak pernah jalan.
-    // Stabilitas tangan diambil dari sensor, bukan dari segi.stabil (itu stabilitas quad).
+    // Sudut tidak lagi jadi gerbang; warpPerspective yang mengoreksi kemiringan.
     LaunchedEffect(Unit) {
         while (true) {
             delay(100)
             val siapSensor = Kesiapan.siap(
-                sudut = sudutKini,
                 guncangan = guncanganKini,
                 berputar = berputarKini,
                 lux = luxKini,
                 terangFrame = terangKini,
-                sudutMaks = sudutMaksKini,
             )
             status = mesin.perbarui(
                 adaKertas = segiKini != null,
@@ -177,6 +173,7 @@ fun KameraScreen(
             BarisChip(
                 siap = siap,
                 sudut = sensor.sudut,
+                sudutMaks = sudutMaks,
                 lux = sensor.lux,
                 terangFrame = terangFrame,
                 bayangan = bayangan,
@@ -270,6 +267,7 @@ private fun PanduanKerataan(siap: Boolean, segi: SegiLayar?) {
 private fun BarisChip(
     siap: Boolean,
     sudut: Float,
+    sudutMaks: Float,
     lux: Float?,
     terangFrame: Float?,
     bayangan: Boolean,
@@ -285,7 +283,7 @@ private fun BarisChip(
             label = "Sudut",
             nilai = String.format(Locale.US, "%.1f", sudut),
             satuan = "°",
-            siap = siap,
+            siap = Kesiapan.cukupDatar(sudut, sudutMaks),
         )
         Chip(
             label = "Cahaya",
@@ -395,7 +393,7 @@ private fun StatusKesiapan(status: StatusCapture) {
                 StatusCapture.SIAP -> "Tahan diam, memotret otomatis"
                 StatusCapture.SEARCH -> "Arahkan kamera ke kertas"
                 StatusCapture.CLOSER -> "Dekatkan ke kertas"
-                StatusCapture.DO_NOT_MOVE -> "Tahan diam, sejajarkan HP"
+                StatusCapture.DO_NOT_MOVE -> "Tahan diam sebentar"
             },
             style = MaterialTheme.typography.labelMedium,
             color = Color.White.copy(alpha = 0.74f),

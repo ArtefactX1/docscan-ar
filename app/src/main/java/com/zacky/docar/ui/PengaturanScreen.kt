@@ -88,7 +88,7 @@ fun PengaturanScreen(
         Text("Ambang sudut", style = MaterialTheme.typography.titleMedium, color = Teks)
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "Auto-capture hanya jalan kalau kemiringan HP di bawah nilai ini.",
+            text = "Peringatan kalau kemiringan HP melewati nilai ini. Tidak menghalangi pemotretan — perspektif dikoreksi otomatis.",
             style = MaterialTheme.typography.bodySmall,
             color = TeksRedup,
         )
