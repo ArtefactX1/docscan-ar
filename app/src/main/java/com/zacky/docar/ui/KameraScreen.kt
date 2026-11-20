@@ -88,7 +88,6 @@ fun KameraScreen(
         guncangan = sensor.guncangan,
         berputar = sensor.berputar,
         lux = sensor.lux,
-        adaDokumen = segi != null,
         terangFrame = terangFrame,
         sudutMaks = sudutMaks,
     )

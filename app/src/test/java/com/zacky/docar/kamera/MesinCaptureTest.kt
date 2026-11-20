@@ -53,6 +53,28 @@ class MesinCaptureTest {
     }
 
     @Test
+    fun tanpa_kertas_tetap_bisa_siap_setelah_stabil() {
+        val m = mesin()
+        assertEquals(StatusCapture.SEARCH, m.perbarui(false, 0f, true, true))
+        assertEquals(StatusCapture.SEARCH, m.perbarui(false, 0f, true, true))
+        assertEquals(StatusCapture.SIAP, m.perbarui(false, 0f, true, true))
+    }
+
+    @Test
+    fun kertas_kecil_tetap_bisa_siap_setelah_stabil() {
+        val m = mesin()
+        assertEquals(StatusCapture.CLOSER, m.perbarui(true, 0.05f, true, true))
+        assertEquals(StatusCapture.CLOSER, m.perbarui(true, 0.05f, true, true))
+        assertEquals(StatusCapture.SIAP, m.perbarui(true, 0.05f, true, true))
+    }
+
+    @Test
+    fun tanpa_kertas_tapi_goyang_tidak_siap() {
+        val m = mesin()
+        repeat(5) { assertEquals(StatusCapture.SEARCH, m.perbarui(false, 0f, false, true)) }
+    }
+
+    @Test
     fun sensor_belum_siap_menahan() {
         val m = mesin()
         repeat(5) {

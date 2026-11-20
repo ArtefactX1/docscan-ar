@@ -44,8 +44,13 @@ class KesiapanTest {
     }
 
     @Test
-    fun sudut_terlalu_besar_tidak_siap() {
-        assertFalse(Kesiapan.siap(sudut = 7f, guncangan = false, berputar = false, lux = 200f))
+    fun sudut_7_derajat_kini_siap() {
+        assertTrue(Kesiapan.siap(sudut = 7f, guncangan = false, berputar = false, lux = 200f))
+    }
+
+    @Test
+    fun sudut_di_atas_8_derajat_tidak_siap() {
+        assertFalse(Kesiapan.siap(sudut = 9f, guncangan = false, berputar = false, lux = 200f))
     }
 
     @Test
@@ -90,14 +95,13 @@ class KesiapanTest {
     }
 
     @Test
-    fun tanpa_dokumen_tidak_siap() {
-        assertFalse(
+    fun tanpa_dokumen_tidak_lagi_menghalangi() {
+        assertTrue(
             Kesiapan.siap(
                 sudut = 1f,
                 guncangan = false,
                 berputar = false,
                 lux = 200f,
-                adaDokumen = false,
             )
         )
     }

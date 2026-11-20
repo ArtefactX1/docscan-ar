@@ -40,6 +40,7 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 
 - [x] **F2.1.1** Ambang dan fungsi `siap`
   - Status bertingkat SEARCH/CLOSER/DO_NOT_MOVE/SIAP; butuh 3 frame stabil berturut.
+  - Dilonggarkan: sudut default 2° → 8°, `adaDokumen` dan luas quad tidak lagi memblokir capture (fallback seluruh foto ala PdfCraft). Deteksi gagal tetap memotret setelah stabil, status tampil SEARCH/CLOSER.
 - [x] **F2.1.2** Wajib bertahan 500 ms
 
 ### F2.2 Ambil Foto Otomatis

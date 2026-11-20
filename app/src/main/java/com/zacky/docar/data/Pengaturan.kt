@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.zacky.docar.ocr.BahasaOcr
 
+import com.zacky.docar.sensor.Kesiapan
+
 /**
  * SharedPreferences cukup: beberapa nilai, tanpa alur async.
  * Properti memakai state Compose supaya layar ikut berubah saat disetel.
@@ -14,7 +16,7 @@ import com.zacky.docar.ocr.BahasaOcr
 class Pengaturan(context: Context) {
     private val p = context.getSharedPreferences("pengaturan", Context.MODE_PRIVATE)
 
-    var sudutMaks by mutableFloatStateOf(p.getFloat(KUNCI_SUDUT, 2f))
+    var sudutMaks by mutableFloatStateOf(p.getFloat(KUNCI_SUDUT, Kesiapan.SUDUT_MAKS))
         private set
 
     /** 0 = otomatis mengikuti cahaya, 1 = selalu nyala, 2 = selalu mati. */
