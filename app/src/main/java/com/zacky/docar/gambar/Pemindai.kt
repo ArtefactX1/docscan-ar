@@ -21,6 +21,7 @@ data class HasilScan(val halaman: Bitmap, val sudut: List<Titik>)
 
 object Pemindai {
     private const val SISI_MAKS = 2000
+    private const val SISI_DETEKSI = 1200
     private const val LEBAR_A4 = 1240.0
     private const val TINGGI_A4 = 1754.0
 
@@ -74,9 +75,10 @@ object Pemindai {
     }
 
     /**
-     * Deteksi pasca-capture: grayscale pada bitmap hasil baca (≤2000 px), tanpa
-     * downsample tambahan. Realtime memakai jalur `AnalisDokumen` yang sengaja
-     * lebih kecil; di sini akurasi lebih penting daripada kecepatan.
+     * Deteksi pasca-capture. Bitmap diperkecil ke 1200 px dulu: Canny 50/150 pada
+     * 2000 px memecah tepi kertas jadi kontur kecil karena tekstur, sehingga
+     * approxPolyDP tidak lagi menghasilkan 4 titik. Koordinat dikembalikan ke
+     * skala bitmap asli.
      */
     fun cariTepi(bitmap: Bitmap): List<Titik>? {
         if (!pastikanOpenCv()) return null
@@ -86,7 +88,18 @@ object Pemindai {
         val abu = Mat()
         Imgproc.cvtColor(rgba, abu, Imgproc.COLOR_RGBA2GRAY)
 
-        return cariSegiEmpatKandidat(abu, 3).firstOrNull()
+        val sisiMaks = maxOf(abu.cols(), abu.rows())
+        val faktor = if (sisiMaks > SISI_DETEKSI) SISI_DETEKSI.toDouble() / sisiMaks else 1.0
+        val kecil = Mat()
+        if (faktor < 1.0) {
+            Imgproc.resize(abu, kecil, Size(abu.cols() * faktor, abu.rows() * faktor))
+        } else {
+            abu.copyTo(kecil)
+        }
+
+        val segi = cariSegiEmpatKandidat(kecil, 3).firstOrNull() ?: return null
+        val pembesar = bitmap.width.toFloat() / kecil.cols()
+        return UrutSudut.urut(segi.map { Titik(it.x * pembesar, it.y * pembesar) })
     }
 
     /**

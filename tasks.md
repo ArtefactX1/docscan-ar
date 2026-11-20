@@ -40,7 +40,7 @@ Status per 11 Nov 2026. `[x]` selesai, `[~]` sebagian, `[ ]` belum.
 
 - [x] **F2.1.1** Ambang dan fungsi `siap`
   - Status bertingkat SEARCH/CLOSER/DO_NOT_MOVE/SIAP; butuh 3 frame stabil berturut.
-  - Dilonggarkan: sudut tidak lagi jadi gerbang capture (dikoreksi `warpPerspective`), `adaDokumen` dan luas quad juga tidak memblokir (fallback seluruh foto ala PdfCraft). Sudut hanya mewarnai chip HUD lewat `cukupDatar`.
+  - Dilonggarkan: sudut dan sensor gerak tidak lagi jadi gerbang capture (dikoreksi `warpPerspective`; gerak dinilai dari IoU quad, bukan gyro). `adaDokumen` dan luas quad tidak memblokir. Sudut hanya mewarnai chip HUD lewat `cukupDatar`.
 - [x] **F2.1.2** Wajib bertahan 500 ms
 
 ### F2.2 Ambil Foto Otomatis

@@ -39,46 +39,29 @@ class GuncanganTest {
 
 class KesiapanTest {
     @Test
-    fun semua_terpenuhi_siap() {
-        assertTrue(Kesiapan.siap(guncangan = false, berputar = false, lux = 200f))
-    }
-
-    @Test
-    fun guncangan_menghalangi() {
-        assertFalse(Kesiapan.siap(guncangan = true, berputar = false, lux = 200f))
-    }
-
-    @Test
-    fun berputar_menghalangi() {
-        assertFalse(Kesiapan.siap(guncangan = false, berputar = true, lux = 200f))
+    fun cahaya_cukup_siap() {
+        assertTrue(Kesiapan.siap(lux = 200f))
     }
 
     @Test
     fun ruangan_redup_menghalangi() {
-        assertFalse(Kesiapan.siap(guncangan = false, berputar = false, lux = 20f))
+        assertFalse(Kesiapan.siap(lux = 20f))
     }
 
     @Test
     fun tanpa_sensor_cahaya_tidak_menghalangi() {
-        assertTrue(Kesiapan.siap(guncangan = false, berputar = false, lux = null))
+        assertTrue(Kesiapan.siap(lux = null))
     }
 
     @Test
     fun frame_gelap_menghalangi() {
-        assertFalse(
-            Kesiapan.siap(
-                guncangan = false,
-                berputar = false,
-                lux = null,
-                terangFrame = 20f,
-            )
-        )
+        assertFalse(Kesiapan.siap(lux = null, terangFrame = 20f))
     }
 
     @Test
     fun sudut_tidak_lagi_menghalangi_capture() {
         // Kemiringan dikoreksi warpPerspective; cukup jadi peringatan di HUD.
-        assertTrue(Kesiapan.siap(guncangan = false, berputar = false, lux = 200f))
+        assertTrue(Kesiapan.siap(lux = 200f))
     }
 
     @Test
@@ -89,6 +72,6 @@ class KesiapanTest {
 
     @Test
     fun tanpa_dokumen_tidak_lagi_menghalangi() {
-        assertTrue(Kesiapan.siap(guncangan = false, berputar = false, lux = 200f))
+        assertTrue(Kesiapan.siap(lux = 200f))
     }
 }

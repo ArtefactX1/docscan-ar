@@ -7,19 +7,15 @@ object Kesiapan {
     const val PUTARAN_MAKS = 0.35f
 
     /**
-     * Sudut tidak menghalangi capture: koreksi perspektif menangani kemiringan.
-     * Sudut ekstrem hanya membuat kertas memendek dan OCR turun, jadi cukup
-     * jadi peringatan di HUD.
+     * Tidak ada syarat gerak: auto-capture hanya perlu kertas terdeteksi dan quad
+     * tidak berubah antar frame (lihat [com.zacky.docar.kamera.MesinCapture]).
+     * Syarat sensor gerak dulu memblokir karena denyut tangan selalu terdeteksi.
      */
     fun siap(
-        guncangan: Boolean,
-        berputar: Boolean,
         lux: Float?,
         terangFrame: Float? = null,
     ): Boolean =
-        !guncangan &&
-            !berputar &&
-            (lux == null || lux >= LUX_MIN) &&
+        (lux == null || lux >= LUX_MIN) &&
             (terangFrame == null || terangFrame >= TERANG_MIN)
 
     /** Cukup datar untuk hasil OCR yang baik; dipakai untuk mewarnai chip, bukan gerbang. */

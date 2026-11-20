@@ -78,29 +78,25 @@ fun KameraScreen(
     val terangKini by rememberUpdatedState(terangFrame)
     var bayangan by remember { mutableStateOf(false) }
 
-    val guncanganKini by rememberUpdatedState(sensor.guncangan)
-    val berputarKini by rememberUpdatedState(sensor.berputar)
     val luxKini by rememberUpdatedState(sensor.lux)
 
     val mesin = remember { MesinCapture() }
     var status by remember { mutableStateOf(StatusCapture.SEARCH) }
 
-    // Auto-capture dihitung berkala, bukan hanya saat state berubah: kalau segi
-    // null terus-menerus dan sensor stabil, effect berbasis key tidak pernah jalan.
-    // Sudut tidak lagi jadi gerbang; warpPerspective yang mengoreksi kemiringan.
+    // Auto-capture berkala: syaratnya kertas terdeteksi dan quad tidak berubah
+    // antar frame (IoU). Sensor gerak tidak dipakai — denyut tangan selalu
+    // memicunya dan membuat capture tidak pernah jalan.
     LaunchedEffect(Unit) {
         while (true) {
             delay(100)
             val siapSensor = Kesiapan.siap(
-                guncangan = guncanganKini,
-                berputar = berputarKini,
                 lux = luxKini,
                 terangFrame = terangKini,
             )
             status = mesin.perbarui(
                 adaKertas = segiKini != null,
                 luasRasio = segiKini?.luas ?: 0f,
-                posisiStabil = !guncanganKini && !berputarKini,
+                posisiStabil = segiKini?.stabil == true,
                 sensorSiap = siapSensor,
             )
         }
@@ -301,7 +297,7 @@ private fun BarisChip(
             label = "Getar",
             nilai = if (guncangan) "goyah" else "stabil",
             satuan = null,
-            siap = siap,
+            siap = !guncangan,
         )
         Chip(
             label = "Kertas",

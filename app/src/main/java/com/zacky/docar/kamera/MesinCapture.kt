@@ -23,30 +23,19 @@ class MesinCapture(
         sensorSiap: Boolean,
     ): StatusCapture {
         if (!adaKertas) {
-            // PdfCraft memotret dulu lalu crop; deteksi gagal bukan alasan menolak foto.
-            // Status tetap SEARCH supaya pengguna tahu kertas belum terlihat.
-            if (!posisiStabil || !sensorSiap) {
-                stabilBerturut = 0
-                return StatusCapture.SEARCH
-            }
-            stabilBerturut++
-            return if (stabilBerturut >= frameStabil) StatusCapture.SIAP else StatusCapture.SEARCH
+            stabilBerturut = 0
+            return StatusCapture.SEARCH
         }
-        if (luasRasio < luasMin) {
-            // Dekatkan disarankan, bukan diwajibkan: foto tetap boleh diambil.
-            if (!posisiStabil || !sensorSiap) {
-                stabilBerturut = 0
-                return StatusCapture.CLOSER
-            }
-            stabilBerturut++
-            return if (stabilBerturut >= frameStabil) StatusCapture.SIAP else StatusCapture.CLOSER
-        }
+        val dekat = luasRasio >= luasMin
         if (!posisiStabil || !sensorSiap) {
             stabilBerturut = 0
-            return StatusCapture.DO_NOT_MOVE
+            return if (dekat) StatusCapture.DO_NOT_MOVE else StatusCapture.CLOSER
         }
         stabilBerturut++
-        return if (stabilBerturut >= frameStabil) StatusCapture.SIAP else StatusCapture.DO_NOT_MOVE
+        if (stabilBerturut < frameStabil) {
+            return if (dekat) StatusCapture.DO_NOT_MOVE else StatusCapture.CLOSER
+        }
+        return StatusCapture.SIAP
     }
 
     fun reset() {
