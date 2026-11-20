@@ -33,6 +33,7 @@ class AnalisDokumen(
 
     private var terakhir = 0L
     private var sebelumnya: List<Titik>? = null
+    private val penyangga = PenyanggaDeteksi(maksGagal = 8)
 
     override fun analyze(image: ImageProxy) {
         val sekarang = System.currentTimeMillis()
@@ -72,8 +73,11 @@ class AnalisDokumen(
 
         val kandidat = Pemindai.cariSegiEmpatKandidat(kecil, 3)
         if (kandidat.isEmpty()) {
-            sebelumnya = null
-            return null
+            // Jangan reset `sebelumnya` di sini: satu frame kosong bukan berarti kertas
+            // hilang. Penyangga yang menentukan kapan quad benar-benar dilepas.
+            val ditahan = penyangga.terima(null)
+            if (ditahan == null) sebelumnya = null
+            return ditahan
         }
 
         val derajat = image.imageInfo.rotationDegrees
@@ -93,22 +97,34 @@ class AnalisDokumen(
             kecil.cols().toFloat() / kecil.rows()
         }
 
+        val urutKandidat = ternormal.map { UrutSudut.urut(it) }
         val lama = sebelumnya
-        // Pilih kandidat yang paling cocok dengan frame sebelumnya, fallback ke yang terluas.
-        val pilih = if (lama != null) {
-            ternormal.maxByOrNull { Stabilkan.iou(lama, UrutSudut.urut(it)) } ?: ternormal[0]
-        } else {
-            ternormal[0]
-        }
-        val urut = UrutSudut.urut(pilih)
-        val stabil = lama != null && Stabilkan.iou(lama, urut) >= IOU_STABIL
-        val halus = if (stabil) Stabilkan.halus(lama!!, urut, ALPHA_HALUS) else urut
-        sebelumnya = halus
 
-        return SegiLayar(halus, rasio, Stabilkan.luas(halus), stabil)
+        val dipilih: List<Titik>
+        val stabil: Boolean
+        if (lama == null) {
+            dipilih = urutKandidat.first()
+            stabil = false
+        } else {
+            val terbaik = Stabilkan.pilihTerdekat(urutKandidat, lama, IOU_GANTI)
+            if (terbaik != null) {
+                dipilih = terbaik
+                stabil = Stabilkan.iou(lama, terbaik) >= IOU_STABIL
+            } else {
+                // Kontur lain jauh dari quad sekarang: tahan yang lama daripada
+                // melompat ke kandidat yang mungkin meja atau bayangan.
+                dipilih = lama
+                stabil = true
+            }
+        }
+
+        val halus = if (lama == null) dipilih else Stabilkan.halus(lama, dipilih, ALPHA_HALUS)
+        sebelumnya = halus
+        return penyangga.terima(SegiLayar(halus, rasio, Stabilkan.luas(halus), stabil))
     }
 
     private companion object {
+        const val IOU_GANTI = 0.25f
         const val IOU_STABIL = 0.6f
         const val ALPHA_HALUS = 0.35f
     }

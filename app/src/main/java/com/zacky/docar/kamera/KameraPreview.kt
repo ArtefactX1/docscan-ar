@@ -69,20 +69,20 @@ fun KameraPreview(
     val utama = remember { ContextCompat.getMainExecutor(context) }
     val onSegiKini by rememberUpdatedState(onSegi)
     val onCahayaKini by rememberUpdatedState(onCahaya)
-    val penyangga = remember { PenyanggaDeteksi() }
+
+    // Analis harus hidup selama sesi kamera. Kalau dibuat per frame, riwayat quad
+    // (smoothing + penahan flicker) ikut ter-reset tiap frame dan tidak pernah aktif.
+    val analis = remember {
+        AnalisDokumen(
+            onSegi = { segi -> utama.execute { onSegiKini(segi) } },
+            onCahaya = { terang, bayangan ->
+                utama.execute { onCahayaKini(terang, bayangan) }
+            },
+        )
+    }
 
     DisposableEffect(Unit) {
-        imageAnalysis.setAnalyzer(eksekutor) { image ->
-            AnalisDokumen(
-                onSegi = { segi ->
-                    val ditahan = penyangga.terima(segi)
-                    utama.execute { onSegiKini(ditahan) }
-                },
-                onCahaya = { terang, bayangan ->
-                    utama.execute { onCahayaKini(terang, bayangan) }
-                },
-            ).analyze(image)
-        }
+        imageAnalysis.setAnalyzer(eksekutor) { image -> analis.analyze(image) }
         onDispose { eksekutor.shutdown() }
     }
 

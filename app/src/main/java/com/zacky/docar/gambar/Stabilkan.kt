@@ -118,4 +118,19 @@ object Stabilkan {
         for (i in a.indices) maks = max(maks, hypot(a[i].x - b[i].x, a[i].y - b[i].y))
         return maks
     }
+
+    /**
+     * Kandidat yang paling mirip [lama]. null kalau tidak ada yang cukup mirip —
+     * artinya lebih baik tahan quad lama daripada melompat ke kontur lain
+     * (meja, bayangan) yang muncul sesaat.
+     */
+    fun pilihTerdekat(
+        kandidat: List<List<Titik>>,
+        lama: List<Titik>,
+        iouGanti: Float,
+    ): List<Titik>? {
+        if (kandidat.isEmpty()) return null
+        val terbaik = kandidat.maxByOrNull { iou(lama, it) } ?: return null
+        return if (iou(lama, terbaik) >= iouGanti) terbaik else null
+    }
 }
