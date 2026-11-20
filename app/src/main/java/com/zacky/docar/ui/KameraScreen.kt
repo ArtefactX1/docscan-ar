@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,8 +73,10 @@ fun KameraScreen(
     val sensor = ingatSensorKamera()
     val controller = rememberKameraController()
     var segi by remember { mutableStateOf<SegiLayar?>(null) }
+    val segiKini by rememberUpdatedState(segi)
     var detikTerakhir by remember { mutableStateOf(0L) }
     var terangFrame by remember { mutableStateOf<Float?>(null) }
+    val terangKini by rememberUpdatedState(terangFrame)
     var bayangan by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -83,24 +86,36 @@ fun KameraScreen(
         }
     }
 
-    val sensorSiap = Kesiapan.siap(
-        sudut = sensor.sudut,
-        guncangan = sensor.guncangan,
-        berputar = sensor.berputar,
-        lux = sensor.lux,
-        terangFrame = terangFrame,
-        sudutMaks = sudutMaks,
-    )
+    val sudutMaksKini by rememberUpdatedState(sudutMaks)
+    val guncanganKini by rememberUpdatedState(sensor.guncangan)
+    val berputarKini by rememberUpdatedState(sensor.berputar)
+    val luxKini by rememberUpdatedState(sensor.lux)
+    val sudutKini by rememberUpdatedState(sensor.sudut)
 
     val mesin = remember { MesinCapture() }
     var status by remember { mutableStateOf(StatusCapture.SEARCH) }
-    LaunchedEffect(segi, sensorSiap) {
-        status = mesin.perbarui(
-            adaKertas = segi != null,
-            luasRasio = segi?.luas ?: 0f,
-            posisiStabil = segi?.stabil == true,
-            sensorSiap = sensorSiap,
-        )
+
+    // Auto-capture dihitung berkala, bukan hanya saat state berubah: kalau segi
+    // null terus-menerus dan sensor stabil, effect berbasis key tidak pernah jalan.
+    // Stabilitas tangan diambil dari sensor, bukan dari segi.stabil (itu stabilitas quad).
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(100)
+            val siapSensor = Kesiapan.siap(
+                sudut = sudutKini,
+                guncangan = guncanganKini,
+                berputar = berputarKini,
+                lux = luxKini,
+                terangFrame = terangKini,
+                sudutMaks = sudutMaksKini,
+            )
+            status = mesin.perbarui(
+                adaKertas = segiKini != null,
+                luasRasio = segiKini?.luas ?: 0f,
+                posisiStabil = !guncanganKini && !berputarKini,
+                sensorSiap = siapSensor,
+            )
+        }
     }
     val siap = status == StatusCapture.SIAP
 
