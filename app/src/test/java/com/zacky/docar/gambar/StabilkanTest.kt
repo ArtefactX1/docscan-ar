@@ -44,6 +44,50 @@ class StabilkanTest {
     }
 
     @Test
+    fun lonjong_a4_mendekati_satu_koma_empat() {
+        val a4 = listOf(
+            Titik(0f, 0f),
+            Titik(124f, 0f),
+            Titik(124f, 175f),
+            Titik(0f, 175f),
+        )
+        assertEquals(1.41f, Stabilkan.lonjong(a4), 0.01f)
+    }
+
+    @Test
+    fun lonjong_gepeng_besar() {
+        val gepeng = listOf(
+            Titik(0f, 0f),
+            Titik(60f, 0f),
+            Titik(60f, 6f),
+            Titik(0f, 6f),
+        )
+        assertEquals(10f, Stabilkan.lonjong(gepeng), 0.01f)
+    }
+
+    @Test
+    fun bingkai_menempel_dihitung() {
+        val penuh = listOf(
+            Titik(0f, 0f),
+            Titik(100f, 0f),
+            Titik(100f, 100f),
+            Titik(0f, 100f),
+        )
+        assertEquals(4, Stabilkan.menempelBingkai(penuh, 100f, 100f))
+    }
+
+    @Test
+    fun kertas_di_tengah_tidak_menempel() {
+        val tengah = listOf(
+            Titik(20f, 20f),
+            Titik(80f, 20f),
+            Titik(80f, 80f),
+            Titik(20f, 80f),
+        )
+        assertEquals(0, Stabilkan.menempelBingkai(tengah, 100f, 100f))
+    }
+
+    @Test
     fun titik_kembar_ditolak() {
         val rusak = listOf(Titik(0f, 0f), Titik(0f, 0f), Titik(10f, 10f), Titik(0f, 10f))
         assertFalse(Stabilkan.sah(rusak, 100f, 100f))

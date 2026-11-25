@@ -29,6 +29,10 @@ app/src/main/java/com/zacky/docar/
 ├── pdf/                   PdfBox: PDF A4 + text layer invisible
 ├── data/                  SQLite, repositori, preferensi pemindaian
 └── ui/                    layar Compose
+
+Alur navigasi: Menu → Kamera → Proses → Hasil → Dokumen. Menu juga membuka
+Arsip, Petunjuk, Tentang, dan Pengaturan. Izin kamera baru diminta saat masuk
+Kamera, bukan saat aplikasi dibuka.
 ```
 
 ## Aturan kode
@@ -71,4 +75,5 @@ app/src/main/java/com/zacky/docar/
 - `PreviewView` harus `FIT_CENTER` agar pemetaan koordinat deteksi ke overlay akurat. `FILL_CENTER` memotong gambar dan membuat overlay meleset.
 - `ImageAnalysis` harus `STRATEGY_KEEP_ONLY_LATEST` dan ditutup (`image.close()`) di `finally`.
 - PdfBox butuh `PDFBoxResourceLoader.init(context)` sebelum dipakai.
+- Splash API 31+ memakai `windowSplashScreen*`, versi lama memakai `windowBackground` drawable. Style dengan nama sama di `values-v31` menimpa seluruh definisi, jadi semua item harus diulang di sana.
 - Jangan mengecualikan `LiberationSans-Regular.ttf` lewat `ignoreAssetsPatterns`. `PDType1Font.<clinit>` memuatnya lewat `FontMappers` sebelum Helvetica dipakai; tanpa aset itu simpan PDF gagal dengan `FileNotFoundException`. Hanya `cmap` yang boleh dikecualikan.

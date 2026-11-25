@@ -44,6 +44,43 @@ object Stabilkan {
     }
 
     /**
+     * Perbandingan sisi terpanjang dan terpendek. Kertas A4 ±1,41; struk bisa
+     * sampai 3,5. Di atas [batas] bentuknya terlalu gepeng untuk jadi halaman.
+     */
+    fun lonjong(t: List<Titik>): Float {
+        if (t.size != 4) return Float.MAX_VALUE
+        var terpendek = Float.MAX_VALUE
+        var terpanjang = 0f
+        for (i in t.indices) {
+            val a = t[i]
+            val b = t[(i + 1) % 4]
+            val sisi = hypot(b.x - a.x, b.y - a.y)
+            if (sisi < terpendek) terpendek = sisi
+            if (sisi > terpanjang) terpanjang = sisi
+        }
+        if (terpendek <= 0f) return Float.MAX_VALUE
+        return terpanjang / terpendek
+    }
+
+    /** Jumlah sisi yang hampir menyentuh tepi frame; kertas biasanya tidak menempel. */
+    fun menempelBingkai(t: List<Titik>, lebar: Float, tinggi: Float): Int {
+        if (t.size != 4) return 0
+        val tepiX = lebar * 0.02f
+        val tepiY = tinggi * 0.02f
+        var jumlah = 0
+        for (i in t.indices) {
+            val a = t[i]
+            val b = t[(i + 1) % 4]
+            val diKiri = a.x < tepiX && b.x < tepiX
+            val diKanan = a.x > lebar - tepiX && b.x > lebar - tepiX
+            val diAtas = a.y < tepiY && b.y < tepiY
+            val diBawah = a.y > tinggi - tepiY && b.y > tinggi - tepiY
+            if (diKiri || diKanan || diAtas || diBawah) jumlah++
+        }
+        return jumlah
+    }
+
+    /**
      * Tolak quad merosot: titik kembar, sisi pendek, atau jauh di luar frame.
      * Detektor kadang mengembalikan quad nol.
      */

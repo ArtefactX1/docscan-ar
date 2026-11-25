@@ -3,7 +3,6 @@ package com.zacky.docar.ui
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,16 +33,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zacky.docar.data.Dokumen
-import com.zacky.docar.ui.theme.Garis
 import com.zacky.docar.ui.theme.Latar
 import com.zacky.docar.ui.theme.Permukaan
 import com.zacky.docar.ui.theme.Teks
 import com.zacky.docar.ui.theme.TeksRedup
+import com.zacky.docar.ui.theme.R1
+import com.zacky.docar.ui.theme.R2
+import com.zacky.docar.ui.theme.S1
+import com.zacky.docar.ui.theme.S2
+import com.zacky.docar.ui.theme.S3
+import com.zacky.docar.ui.theme.S4
+import com.zacky.docar.ui.theme.S5
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,24 +65,14 @@ fun ArsipScreen(
             .fillMaxSize()
             .background(Latar)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = S4),
     ) {
-        Spacer(Modifier.height(12.dp))
-
+        Spacer(Modifier.height(S2))
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(S1),
         ) {
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .border(1.dp, Garis, RoundedCornerShape(14.dp))
-                    .clickable(onClick = onKembali)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-            ) {
-                Text("←", style = MaterialTheme.typography.bodyMedium, color = Teks)
-            }
+            IkonKotak(Ikon.Kembali, "Kembali", onClick = onKembali)
             Text(
                 text = "Arsip",
                 style = MaterialTheme.typography.headlineMedium,
@@ -92,16 +86,15 @@ fun ArsipScreen(
             )
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(S3))
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(R2))
                 .background(Permukaan)
-                .border(1.dp, Garis, RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 14.dp),
+                .padding(horizontal = S3, vertical = S3),
             contentAlignment = Alignment.CenterStart,
         ) {
             if (kueri.isEmpty()) {
@@ -124,7 +117,7 @@ fun ArsipScreen(
             )
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(S3))
 
         if (dokumen.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -138,13 +131,13 @@ fun ArsipScreen(
         }
 
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(S2),
             modifier = Modifier.fillMaxSize(),
         ) {
             items(dokumen, key = { it.id }) { d ->
                 BarisDokumen(d, onBuka)
             }
-            item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(Modifier.height(S5)) }
         }
     }
 }
@@ -158,18 +151,17 @@ private fun BarisDokumen(dokumen: Dokumen, onBuka: (Dokumen) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(R2))
             .background(Permukaan)
-            .border(1.dp, Garis, RoundedCornerShape(14.dp))
             .clickable { onBuka(dokumen) }
-            .padding(10.dp),
+            .padding(S3),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
             modifier = Modifier
                 .size(width = 44.dp, height = 58.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(R1))
                 .background(Color(0xFFF4F1EA)),
             contentAlignment = Alignment.Center,
         ) {
@@ -191,7 +183,7 @@ private fun BarisDokumen(dokumen: Dokumen, onBuka: (Dokumen) -> Unit) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(S1))
             Text(
                 text = "${dokumen.jumlahHalaman} halaman · ${tanggal(dokumen.dibuat)}",
                 style = MaterialTheme.typography.labelSmall,

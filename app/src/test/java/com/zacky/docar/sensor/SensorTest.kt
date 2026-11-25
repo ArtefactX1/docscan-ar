@@ -59,9 +59,14 @@ class KesiapanTest {
     }
 
     @Test
-    fun sudut_tidak_lagi_menghalangi_capture() {
-        // Kemiringan dikoreksi warpPerspective; cukup jadi peringatan di HUD.
-        assertTrue(Kesiapan.siap(lux = 200f))
+    fun sudut_kecil_tidak_menghalangi() {
+        assertTrue(Kesiapan.siap(lux = 200f, sudut = 5f))
+    }
+
+    @Test
+    fun sudut_sangat_miring_menghalangi() {
+        // Di atas SUDUT_BLOKIR foto terlalu miring untuk dikoreksi wajar.
+        assertFalse(Kesiapan.siap(lux = 200f, sudut = 40f))
     }
 
     @Test

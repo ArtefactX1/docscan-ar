@@ -30,6 +30,8 @@ import androidx.core.content.ContextCompat
 import com.zacky.docar.ui.theme.Latar
 import com.zacky.docar.ui.theme.Teks
 import com.zacky.docar.ui.theme.TeksRedup
+import com.zacky.docar.ui.theme.S3
+import com.zacky.docar.ui.theme.S5
 
 @Composable
 fun IzinKamera(onGranted: () -> Unit) {
@@ -69,14 +71,14 @@ fun IzinKamera(onGranted: () -> Unit) {
             color = Teks,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(S3))
         Text(
             text = "DocScan AR memakai kamera untuk memindai dokumen. Tidak ada gambar yang dikirim keluar perangkat.",
             style = MaterialTheme.typography.bodySmall,
             color = TeksRedup,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(S5))
         Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
             Text("Coba lagi")
         }

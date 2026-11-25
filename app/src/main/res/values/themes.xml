@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="ikon_latar">#0A0A0B</color>
+
+    <!-- Splash pre-Android 12: logo statis di latar gelap, tanpa layar putih. -->
     <style name="Theme.DocScanAR" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0A0A0B</item>
+        <item name="android:windowBackground">@drawable/splash</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>

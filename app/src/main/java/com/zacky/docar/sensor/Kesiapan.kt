@@ -6,18 +6,18 @@ object Kesiapan {
     const val TERANG_MIN = 70f
     const val PUTARAN_MAKS = 0.35f
 
-    /**
-     * Tidak ada syarat gerak: auto-capture hanya perlu kertas terdeteksi dan quad
-     * tidak berubah antar frame (lihat [com.zacky.docar.kamera.MesinCapture]).
-     * Syarat sensor gerak dulu memblokir karena denyut tangan selalu terdeteksi.
-     */
+    /** Batas keras untuk auto-capture; [SUDUT_MAKS] hanya peringatan di layar. */
+    const val SUDUT_BLOKIR = 15f
+
     fun siap(
         lux: Float?,
         terangFrame: Float? = null,
+        sudut: Float = 0f,
     ): Boolean =
-        (lux == null || lux >= LUX_MIN) &&
+        sudut <= SUDUT_BLOKIR &&
+            (lux == null || lux >= LUX_MIN) &&
             (terangFrame == null || terangFrame >= TERANG_MIN)
 
-    /** Cukup datar untuk hasil OCR yang baik; dipakai untuk mewarnai chip, bukan gerbang. */
+    /** Cukup datar untuk hasil OCR yang baik; dipakai untuk mewarnai telemetri. */
     fun cukupDatar(sudut: Float, sudutMaks: Float = SUDUT_MAKS): Boolean = sudut <= sudutMaks
 }

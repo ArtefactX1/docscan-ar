@@ -4,27 +4,21 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,13 +35,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.zacky.docar.kamera.KameraPreview
 import com.zacky.docar.kamera.MesinCapture
 import com.zacky.docar.kamera.SegiLayar
@@ -55,8 +46,15 @@ import com.zacky.docar.kamera.StatusCapture
 import com.zacky.docar.kamera.rememberKameraController
 import com.zacky.docar.sensor.Kesiapan
 import com.zacky.docar.sensor.ingatSensorKamera
+import com.zacky.docar.ui.theme.Angka
+import com.zacky.docar.ui.theme.Latar
 import com.zacky.docar.ui.theme.Peringatan
+import com.zacky.docar.ui.theme.S2
+import com.zacky.docar.ui.theme.S3
+import com.zacky.docar.ui.theme.S4
 import com.zacky.docar.ui.theme.Siap
+import com.zacky.docar.ui.theme.Teks
+import com.zacky.docar.ui.theme.TeksRedup
 import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.delay
@@ -68,7 +66,7 @@ fun KameraScreen(
     onModeSenter: (Int) -> Unit,
     onFoto: (File) -> Unit,
     onArsip: () -> Unit,
-    onSetelan: () -> Unit,
+    onKembali: () -> Unit,
 ) {
     val sensor = ingatSensorKamera()
     val controller = rememberKameraController()
@@ -77,11 +75,11 @@ fun KameraScreen(
     var terangFrame by remember { mutableStateOf<Float?>(null) }
     val terangKini by rememberUpdatedState(terangFrame)
     var bayangan by remember { mutableStateOf(false) }
-
     val luxKini by rememberUpdatedState(sensor.lux)
-
+    val sudutKini by rememberUpdatedState(sensor.sudut)
     val mesin = remember { MesinCapture() }
     var status by remember { mutableStateOf(StatusCapture.SEARCH) }
+    var progres by remember { mutableStateOf(0f) }
 
     // Auto-capture berkala: syaratnya kertas terdeteksi dan quad tidak berubah
     // antar frame (IoU). Sensor gerak tidak dipakai — denyut tangan selalu
@@ -92,17 +90,20 @@ fun KameraScreen(
             val siapSensor = Kesiapan.siap(
                 lux = luxKini,
                 terangFrame = terangKini,
+                sudut = sudutKini,
             )
             status = mesin.perbarui(
                 adaKertas = segiKini != null,
                 luasRasio = segiKini?.luas ?: 0f,
                 posisiStabil = segiKini?.stabil == true,
                 sensorSiap = siapSensor,
+                sekarang = System.currentTimeMillis(),
             )
+            progres = mesin.progres
         }
     }
-    val siap = status == StatusCapture.SIAP
 
+    val siap = status == StatusCapture.SIAP
     var terkunci by remember { mutableStateOf(false) }
     val senter = when (modeSenter) {
         1 -> true
@@ -131,9 +132,7 @@ fun KameraScreen(
                 mesin.reset()
                 onFoto(file)
             },
-            onSegi = { hasil ->
-                segi = hasil
-            },
+            onSegi = { hasil -> segi = hasil },
             onCahaya = { terang, adaBayangan ->
                 terangFrame = terang
                 bayangan = adaBayangan
@@ -144,30 +143,25 @@ fun KameraScreen(
 
         // Kilat putih singkat saat capture supaya pengguna tahu foto diambil.
         if (kilat.value > 0f) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.White.copy(alpha = kilat.value))
-            )
+            Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = kilat.value)))
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = S4),
         ) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(S2))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                horizontalArrangement = Arrangement.spacedBy(S2, Alignment.End),
             ) {
-                TombolAtas("Setelan", onSetelan)
-                TombolAtas("Arsip", onArsip)
+                IkonAtas(Ikon.Kembali, "Menu", onKembali)
+                IkonAtas(Ikon.Arsip, "Arsip", onArsip)
             }
-            Spacer(Modifier.height(8.dp))
-            BarisChip(
-                siap = siap,
+            Spacer(Modifier.weight(1f))
+            Telemetri(
                 sudut = sensor.sudut,
                 sudutMaks = sudutMaks,
                 lux = sensor.lux,
@@ -175,18 +169,19 @@ fun KameraScreen(
                 bayangan = bayangan,
                 guncangan = sensor.guncangan || sensor.berputar,
                 adaDokumen = segi != null,
+                diam = segi?.stabil == true,
             )
-            Spacer(Modifier.weight(1f))
-            StatusKesiapan(status = status)
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(S2))
+            Petunjuk(status = status, terkunci = terkunci, tersedia = sensor.tersedia)
+            Spacer(Modifier.height(S4))
             KontrolBawah(
                 terkunci = terkunci,
-                tersedia = sensor.tersedia,
+                progres = progres,
                 senter = senter,
                 onToggleSenter = { onModeSenter((modeSenter + 1) % 3) },
                 onCapture = { controller.capture() },
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(S3))
         }
     }
 }
@@ -194,11 +189,11 @@ fun KameraScreen(
 @Composable
 private fun PanduanKerataan(siap: Boolean, segi: SegiLayar?) {
     val warna = if (siap) Siap else Color.White.copy(alpha = 0.55f)
-
     Canvas(Modifier.fillMaxSize()) {
-        // FIT_CENTER: koordinat ternormalisasi dipetakan ke kotak gambar yang tampil,
-        // bukan seluruh layar.
-        val rasio = segi?.rasio ?: (4f / 3f)
+        // Belum ada kertas terdeteksi: tidak ada kotak sama sekali.
+        val titik = segi?.titik?.takeIf { it.size == 4 } ?: return@Canvas
+        // FIT_CENTER: koordinat ternormalisasi dipetakan ke kotak gambar yang tampil.
+        val rasio = segi.rasio
         val lebarGambar: Float
         val tinggiGambar: Float
         if (rasio > size.width / size.height) {
@@ -210,17 +205,7 @@ private fun PanduanKerataan(siap: Boolean, segi: SegiLayar?) {
         }
         val kiri = (size.width - lebarGambar) / 2f
         val atas = (size.height - tinggiGambar) / 2f
-
-        val sudut = if (segi != null && segi.titik.size == 4) {
-            segi.titik.map { Offset(kiri + it.x * lebarGambar, atas + it.y * tinggiGambar) }
-        } else {
-            listOf(
-                Offset(size.width * 0.14f, size.height * 0.25f),
-                Offset(size.width * 0.86f, size.height * 0.23f),
-                Offset(size.width * 0.90f, size.height * 0.76f),
-                Offset(size.width * 0.11f, size.height * 0.78f),
-            )
-        }
+        val sudut = titik.map { Offset(kiri + it.x * lebarGambar, atas + it.y * tinggiGambar) }
 
         val jalur = Path().apply {
             moveTo(sudut[0].x, sudut[0].y)
@@ -232,9 +217,9 @@ private fun PanduanKerataan(siap: Boolean, segi: SegiLayar?) {
         drawPath(jalur, warna, style = Stroke(width = 2.dp.toPx()))
 
         val panjang = 22.dp.toPx()
-        fun siku(titik: Offset, dx: Float, dy: Float) {
-            drawLine(warna, titik, Offset(titik.x + dx * panjang, titik.y), strokeWidth = 2.dp.toPx())
-            drawLine(warna, titik, Offset(titik.x, titik.y + dy * panjang), strokeWidth = 2.dp.toPx())
+        fun siku(p: Offset, dx: Float, dy: Float) {
+            drawLine(warna, p, Offset(p.x + dx * panjang, p.y), strokeWidth = 2.dp.toPx())
+            drawLine(warna, p, Offset(p.x, p.y + dy * panjang), strokeWidth = 2.dp.toPx())
         }
         siku(sudut[0], 1f, 1f)
         siku(sudut[1], -1f, 1f)
@@ -258,10 +243,22 @@ private fun PanduanKerataan(siap: Boolean, segi: SegiLayar?) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BarisChip(
-    siap: Boolean,
+private fun IkonAtas(ikon: Ikon, label: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        IkonGambar(ikon, Color.White.copy(alpha = 0.9f))
+    }
+}
+
+/** Satu baris mono: lebih cepat dibaca daripada empat chip. */
+@Composable
+private fun Telemetri(
     sudut: Float,
     sudutMaks: Float,
     lux: Float?,
@@ -269,276 +266,145 @@ private fun BarisChip(
     bayangan: Boolean,
     guncangan: Boolean,
     adaDokumen: Boolean,
+    diam: Boolean,
 ) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Chip(
-            label = "Sudut",
-            nilai = String.format(Locale.US, "%.1f", sudut),
-            satuan = "°",
-            siap = Kesiapan.cukupDatar(sudut, sudutMaks),
-        )
-        Chip(
-            label = "Cahaya",
-            nilai = when {
-                bayangan -> "bayangan"
-                (lux != null && lux < Kesiapan.LUX_MIN) ||
-                    (terangFrame != null && terangFrame < Kesiapan.TERANG_MIN) -> "redup"
-                lux == null && terangFrame == null -> "—"
-                else -> "cukup"
-            },
-            satuan = null,
-            siap = siap,
-        )
-        Chip(
-            label = "Getar",
-            nilai = if (guncangan) "goyah" else "stabil",
-            satuan = null,
-            siap = !guncangan,
-        )
-        Chip(
-            label = "Kertas",
-            nilai = if (adaDokumen) "terdeteksi" else "belum",
-            satuan = null,
-            siap = siap,
-        )
+    val datar = Kesiapan.cukupDatar(sudut, sudutMaks)
+    val cahaya = when {
+        bayangan -> "bayangan"
+        (lux != null && lux < Kesiapan.LUX_MIN) ||
+            (terangFrame != null && terangFrame < Kesiapan.TERANG_MIN) -> "redup"
+        lux == null && terangFrame == null -> "—"
+        else -> "cukup"
     }
-}
-
-@Composable
-private fun Chip(label: String, nilai: String, satuan: String?, siap: Boolean) {
-    val latar = if (siap) Color(0xE0102E1E) else Color(0xE03A2808)
-    val garis = if (siap) Siap.copy(alpha = 0.45f) else Peringatan.copy(alpha = 0.5f)
+    val bagian = listOf(
+        String.format(Locale.US, "%.1f°", sudut) to datar,
+        cahaya to (cahaya == "cukup"),
+        (if (guncangan) "goyah" else "stabil") to !guncangan,
+        (if (adaDokumen) "kertas" else "—") to adaDokumen,
+        (if (diam) "diam" else "gerak") to diam,
+    )
 
     Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(latar)
-            .border(1.dp, garis, RoundedCornerShape(50))
-            .padding(horizontal = 11.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF9BA3AC),
-        )
-        if (satuan != null) {
-            NumText(nilai = nilai, style = MaterialTheme.typography.labelMedium, warna = Color(0xFFEAECEF))
-            Text(
-                text = satuan,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF9BA3AC),
-            )
-        } else {
-            Text(
-                text = nilai,
-                style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFFEAECEF),
-            )
-        }
-    }
-}
-
-/**
- * Angka dengan lebar slot tetap. Poppins tidak punya tabular figures, jadi
- * "1.2" dan "11.2" menggeser tetangganya tanpa ini.
- */
-@Composable
-fun NumText(nilai: String, style: TextStyle, warna: Color) {
-    val density = LocalDensity.current
-    val ukuran = if (style.fontSize.isSp) style.fontSize.value else 12f
-    val lebarDigit = with(density) { (ukuran * 0.58f).sp.toDp() }
-    val lebarLain = with(density) { (ukuran * 0.28f).sp.toDp() }
-
-    Row {
-        nilai.forEach { karakter ->
-            Text(
-                text = karakter.toString(),
-                style = style,
-                color = warna,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.width(if (karakter.isDigit()) lebarDigit else lebarLain),
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatusKesiapan(status: StatusCapture) {
-    val siap = status == StatusCapture.SIAP
-    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalArrangement = Arrangement.spacedBy(S3, Alignment.CenterHorizontally),
     ) {
-        Text(
-            text = if (siap) "Siap" else "Belum siap",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontSize = if (siap) 32.sp else 22.sp,
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = if (siap) Siap else Peringatan,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = when (status) {
-                StatusCapture.SIAP -> "Tahan diam, memotret otomatis"
-                StatusCapture.SEARCH -> "Arahkan kamera ke kertas"
-                StatusCapture.CLOSER -> "Dekatkan ke kertas"
-                StatusCapture.DO_NOT_MOVE -> "Tahan diam sebentar"
-            },
-            style = MaterialTheme.typography.labelMedium,
-            color = Color.White.copy(alpha = 0.74f),
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
-private fun TombolAtas(teks: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color(0xB8141618))
-            .border(1.dp, Color.White.copy(alpha = 0.24f), RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
-    ) {
-        Text(
-            text = teks,
-            style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFFEDEFF2),
-        )
-    }
-}
-
-@Composable
-private fun PillButton(teks: String, aktif: Boolean, aktifkan: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(50))
-            .background(if (aktif) Color(0xFFE7E9EC) else Color(0xB8141618))
-            .border(
-                width = 1.dp,
-                color = if (aktif) Color.Transparent else Color.White.copy(alpha = 0.24f),
-                shape = RoundedCornerShape(50),
+        bagian.forEachIndexed { i, (teks, baik) ->
+            if (i > 0) {
+                Text("·", style = Angka, color = TeksRedup.copy(alpha = 0.5f))
+            }
+            Text(
+                text = teks,
+                style = Angka,
+                color = if (baik) Teks.copy(alpha = 0.9f) else Peringatan,
             )
-            .clickable(enabled = aktifkan, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+        }
+    }
+}
+
+@Composable
+private fun Petunjuk(status: StatusCapture, terkunci: Boolean, tersedia: Boolean) {
+    val teks = when {
+        terkunci -> "Terkunci"
+        !tersedia -> "Akselerometer tidak tersedia — ambil manual"
+        status == StatusCapture.SIAP -> "Tahan diam — memotret"
+        status == StatusCapture.SEARCH -> "Arahkan ke kertas"
+        status == StatusCapture.CLOSER -> "Dekatkan ke kertas"
+        else -> "Tahan diam sebentar"
+    }
+    Text(
+        text = teks,
+        style = MaterialTheme.typography.labelMedium,
+        color = if (status == StatusCapture.SIAP) Siap else Color.White.copy(alpha = 0.72f),
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun KontrolBawah(
+    terkunci: Boolean,
+    progres: Float,
+    senter: Boolean?,
+    onToggleSenter: () -> Unit,
+    onCapture: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            text = teks,
-            style = MaterialTheme.typography.labelMedium,
-            color = if (aktif) Color(0xFF0A0A0B) else Color(0xFFEDEFF2),
-        )
+        SenterButton(senter = senter, onClick = onToggleSenter)
+
+        Shutter(terkunci = terkunci, progres = progres, onClick = onCapture)
+
+        // Penyeimbang supaya shutter tetap di tengah.
+        Spacer(Modifier.size(48.dp))
     }
 }
 
 @Composable
 private fun SenterButton(senter: Boolean?, onClick: () -> Unit) {
     val nyala = senter == true
-    val otomatis = senter == null
     val warna = when {
-        nyala -> Color(0xFF0A0A0B)
-        otomatis -> Color(0xFFEDEFF2)
-        else -> Color.White.copy(alpha = 0.45f)
+        nyala -> Latar
+        senter == null -> Color.White.copy(alpha = 0.9f)
+        else -> Color.White.copy(alpha = 0.4f)
     }
 
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(48.dp)
             .clip(CircleShape)
-            .background(if (nyala) Color(0xFFE7E9EC) else Color.White.copy(alpha = 0.08f))
-            .border(1.dp, Color.White.copy(alpha = 0.16f), CircleShape)
-            .clickable(onClick = onClick),
+            .background(
+                if (nyala) Color(0xFFE7E9EC) else Color.White.copy(alpha = 0.1f)
+            )
+            .clickable(onClickLabel = "Mode senter", onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.size(24.dp)) {
-            val bolt = Path().apply {
-                moveTo(size.width * 0.56f, size.height * 0.06f)
-                lineTo(size.width * 0.24f, size.height * 0.54f)
-                lineTo(size.width * 0.46f, size.height * 0.54f)
-                lineTo(size.width * 0.42f, size.height * 0.94f)
-                lineTo(size.width * 0.76f, size.height * 0.44f)
-                lineTo(size.width * 0.52f, size.height * 0.44f)
-                close()
-            }
-            if (nyala) {
-                drawPath(bolt, warna)
-            } else {
-                drawPath(bolt, warna, style = Stroke(width = 1.8.dp.toPx()))
-            }
-        }
+        IkonGambar(Ikon.Senter, warna, ukuran = 20.dp)
     }
 }
 
+/**
+ * Cincin di sekeliling shutter mengisi seiring frame stabil terkumpul, jadi
+ * pengguna melihat progres tanpa membaca teks status.
+ */
 @Composable
-private fun KontrolBawah(
-    terkunci: Boolean,
-    tersedia: Boolean,
-    senter: Boolean?,
-    onToggleSenter: () -> Unit,
-    onCapture: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+private fun Shutter(terkunci: Boolean, progres: Float, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(78.dp)
+            .clip(CircleShape)
+            .clickable(enabled = !terkunci, onClickLabel = "Ambil foto", onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        PillButton(
-            teks = "Ambil manual",
-            aktif = false,
-            aktifkan = !terkunci,
-            onClick = onCapture,
-        )
-
-        Spacer(Modifier.height(14.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(26.dp),
-        ) {
-            SenterButton(senter = senter, onClick = onToggleSenter)
-
-            Box(
-                modifier = Modifier
-                    .size(78.dp)
-                    .clip(CircleShape)
-                    .border(
-                        width = 4.dp,
-                        color = Color.White.copy(alpha = if (terkunci) 0.4f else 0.9f),
-                        shape = CircleShape,
-                    )
-                    .clickable(enabled = !terkunci, onClick = onCapture),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    Modifier
-                        .size(62.dp)
-                        .clip(CircleShape)
-                        .background(if (terkunci) Color.White.copy(alpha = 0.35f) else Color.White)
+        Canvas(Modifier.fillMaxSize()) {
+            val t = 2.dp.toPx()
+            val r = size.minDimension / 2f - t
+            drawCircle(
+                color = Color.White.copy(alpha = 0.16f),
+                radius = r,
+                style = Stroke(width = t),
+            )
+            if (progres > 0f) {
+                drawArc(
+                    color = Siap,
+                    startAngle = -90f,
+                    sweepAngle = 360f * progres.coerceIn(0f, 1f),
+                    useCenter = false,
+                    topLeft = Offset(t, t),
+                    size = androidx.compose.ui.geometry.Size(size.width - t * 2, size.height - t * 2),
+                    style = Stroke(width = t, cap = StrokeCap.Round),
                 )
             }
-
-            Spacer(Modifier.size(56.dp))
         }
-
-        Spacer(Modifier.height(10.dp))
-
-        Text(
-            text = when {
-                terkunci -> "Terkunci"
-                !tersedia -> "Akselerometer tidak tersedia — pakai ambil manual"
-                else -> "Auto-capture aktif saat ketiga indikator hijau"
-            },
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.52f),
-            textAlign = TextAlign.Center,
+        Box(
+            Modifier
+                .size(58.dp)
+                .clip(CircleShape)
+                .background(
+                    if (terkunci) Color.White.copy(alpha = 0.35f) else Color.White
+                )
         )
     }
 }

@@ -3,7 +3,6 @@ package com.zacky.docar.ui
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,13 +13,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,18 +34,21 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.zacky.docar.data.Dokumen
 import com.zacky.docar.data.Halaman
-import com.zacky.docar.ui.theme.Garis
 import com.zacky.docar.ui.theme.Latar
 import com.zacky.docar.ui.theme.Permukaan
 import com.zacky.docar.ui.theme.Peringatan
 import com.zacky.docar.ui.theme.Teks
 import com.zacky.docar.ui.theme.TeksRedup
+import com.zacky.docar.ui.theme.R1
+import com.zacky.docar.ui.theme.R2
+import com.zacky.docar.ui.theme.S1
+import com.zacky.docar.ui.theme.S2
+import com.zacky.docar.ui.theme.S3
+import com.zacky.docar.ui.theme.S4
 
 @Composable
 fun DokumenScreen(
@@ -67,15 +69,14 @@ fun DokumenScreen(
             .fillMaxSize()
             .background(Latar)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = S4),
     ) {
-        Spacer(Modifier.height(12.dp))
-
+        Spacer(Modifier.height(S2))
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(S1),
         ) {
-            TombolKecil("←", onKembali)
+            IkonKotak(Ikon.Kembali, "Kembali", onClick = onKembali)
             Column(Modifier.weight(1f)) {
                 Text(
                     text = dokumen.nama,
@@ -92,7 +93,7 @@ fun DokumenScreen(
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(S3))
 
         if (halaman.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -122,76 +123,110 @@ fun DokumenScreen(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(S3))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TombolAksi(
-                teks = "Tambah halaman",
-                utama = true,
-                aktif = true,
-                onClick = onTambahHalaman,
-                modifier = Modifier.weight(1f),
-            )
-            TombolAksi(
-                teks = "Buka PDF",
-                utama = false,
-                aktif = halaman.isNotEmpty(),
-                onClick = onBukaPdf,
-                modifier = Modifier.weight(1f),
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(S3),
+        ) {
+            TeksAksi("Buka PDF", aktifkan = halaman.isNotEmpty(), onClick = onBukaPdf)
+            TeksAksi("Ekspor PDF", aktifkan = halaman.isNotEmpty(), onClick = onEksporPdf)
+            TeksAksi("Ekspor TXT", aktifkan = halaman.isNotEmpty(), onClick = onEksporTxt)
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(S2))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TombolAksi(
-                teks = "Ekspor PDF",
-                utama = false,
-                aktif = halaman.isNotEmpty(),
-                onClick = onEksporPdf,
-                modifier = Modifier.weight(1f),
-            )
-            TombolAksi(
-                teks = "Ekspor TXT",
-                utama = false,
-                aktif = halaman.isNotEmpty(),
-                onClick = onEksporTxt,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        TombolPrimer(
+            teks = "Tambah halaman",
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onTambahHalaman,
+        )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(S3))
     }
 }
 
 @Composable
-private fun TombolAksi(
-    teks: String,
-    utama: Boolean,
-    aktif: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun BarisHalaman(
+    nomor: Int,
+    halaman: Halaman,
+    sorot: String,
+    bisaNaik: Boolean,
+    bisaTurun: Boolean,
+    onNaik: () -> Unit,
+    onTurun: () -> Unit,
+    onHapus: () -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .heightIn(min = 52.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (utama) Color(0xFFE7E9EC) else Color.Transparent)
-            .border(1.dp, if (utama) Color.Transparent else Garis, RoundedCornerShape(14.dp))
-            .clickable(enabled = aktif, onClick = onClick),
-        contentAlignment = Alignment.Center,
+    val gambar = remember(halaman.thumb) {
+        BitmapFactory.decodeFile(halaman.thumb)?.asImageBitmap()
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(R2))
+            .background(Permukaan)
+            .padding(S3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = teks,
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = when {
-                !aktif -> TeksRedup
-                utama -> Latar
-                else -> Teks
-            },
+            text = "$nomor",
+            style = MaterialTheme.typography.labelMedium,
+            color = TeksRedup,
+            modifier = Modifier.size(width = 18.dp, height = 18.dp),
+        )
+
+        Box(
+            modifier = Modifier
+                .size(width = 44.dp, height = 58.dp)
+                .clip(RoundedCornerShape(R1))
+                .background(Color(0xFFF4F1EA)),
+        ) {
+            if (gambar != null) {
+                Image(
+                    bitmap = gambar,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = sorotBaris(halaman.teks, sorot),
+                style = MaterialTheme.typography.bodySmall,
+                color = Teks,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        IkonBaris(Ikon.Naik, "Naikkan", bisaNaik, onNaik)
+        IkonBaris(Ikon.Turun, "Turunkan", bisaTurun, onTurun)
+        IkonBaris(Ikon.Hapus, "Hapus", true, onHapus)
+    }
+}
+
+@Composable
+private fun IkonBaris(
+    ikon: Ikon,
+    label: String,
+    aktif: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(enabled = aktif, onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        IkonGambar(
+            ikon = ikon,
+            warna = if (aktif) Teks.copy(alpha = 0.85f) else TeksRedup.copy(alpha = 0.3f),
+            ukuran = 18.dp,
         )
     }
 }
@@ -220,87 +255,5 @@ private fun sorotBaris(teks: String, kata: String): AnnotatedString {
             )
             i = baris.indexOf(kueri, i + kueri.length, ignoreCase = true)
         }
-    }
-}
-
-@Composable
-private fun BarisHalaman(
-    nomor: Int,
-    halaman: Halaman,
-    sorot: String,
-    bisaNaik: Boolean,
-    bisaTurun: Boolean,
-    onNaik: () -> Unit,
-    onTurun: () -> Unit,
-    onHapus: () -> Unit,
-) {
-    val gambar = remember(halaman.thumb) {
-        BitmapFactory.decodeFile(halaman.thumb)?.asImageBitmap()
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Permukaan)
-            .border(1.dp, Garis, RoundedCornerShape(14.dp))
-            .padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = "$nomor",
-            style = MaterialTheme.typography.labelMedium,
-            color = TeksRedup,
-            modifier = Modifier.size(width = 18.dp, height = 18.dp),
-        )
-
-        Box(
-            modifier = Modifier
-                .size(width = 44.dp, height = 58.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(Color(0xFFF4F1EA)),
-        ) {
-            if (gambar != null) {
-                Image(
-                    bitmap = gambar,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
-
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = sorotBaris(halaman.teks, sorot),
-                style = MaterialTheme.typography.bodySmall,
-                color = Teks,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        TombolKecil("↑", onNaik, aktif = bisaNaik)
-        TombolKecil("↓", onTurun, aktif = bisaTurun)
-        TombolKecil("✕", onHapus)
-    }
-}
-
-@Composable
-private fun TombolKecil(teks: String, onClick: () -> Unit, aktif: Boolean = true) {
-    Box(
-        modifier = Modifier
-            .size(44.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, Garis, RoundedCornerShape(12.dp))
-            .clickable(enabled = aktif, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = teks,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (aktif) Teks else TeksRedup.copy(alpha = 0.4f),
-        )
     }
 }

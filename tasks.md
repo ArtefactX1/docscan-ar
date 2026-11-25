@@ -154,6 +154,10 @@ Hasil bedah APK CamScanner 7.28.5 (`com.intsig.camscanner`). Deteksi tepi mereka
 
 ## Catatan
 
+- Auto-capture: stabil dinilai dari gerakan quad mentah (≤2% frame), tahan 700 ms berbasis waktu, blokir sudut 15°. Preview dan analyzer dipaksa 4:3 supaya pemetaan kotak tidak meleset.
+- Deteksi preview: luas 8–80% frame, maks 2 sisi menempel bingkai, aspek sisi ≤4,5, dan ≥50% titik sisi quad harus berimpit dengan peta tepi (toleransi 4 px). Tanpa uji tepi, jalur kecerahan menerima meja dan dinding.
+- Uji manual: kotak muncul saat kertas menutup ±10% layar; dinding/meja kosong tidak boleh memicu kotak.
+
 - `prd.md` belum ditulis ke repo; isinya masih di percakapan.
 - APK rilis 9,2 MB, ditandatangani kunci debug.
 - Uji perangkat terakhir: simpan PDF berhasil setelah perbaikan keep rule `fontbox`.

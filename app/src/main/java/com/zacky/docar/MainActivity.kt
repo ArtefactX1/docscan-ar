@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -36,6 +37,9 @@ import com.zacky.docar.ui.DokumenScreen
 import com.zacky.docar.ui.HasilScreen
 import com.zacky.docar.ui.IzinKamera
 import com.zacky.docar.ui.KameraScreen
+import com.zacky.docar.ui.MenuScreen
+import com.zacky.docar.ui.PetunjukScreen
+import com.zacky.docar.ui.TentangScreen
 import com.zacky.docar.ui.PengaturanScreen
 import com.zacky.docar.ui.ProsesScreen
 import com.zacky.docar.ui.theme.DocScanTheme
@@ -48,6 +52,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private sealed interface Layar {
+    data object Menu : Layar
+    data object Petunjuk : Layar
+    data object Tentang : Layar
     data class Kamera(val target: Long?) : Layar
     data class Proses(val file: File, val target: Long?) : Layar
     data class Hasil(
@@ -70,7 +77,17 @@ class MainActivity : ComponentActivity() {
                 val repo = remember { Repositori(this, DokumenDb(this)) }
                 val pengaturan = remember { Pengaturan(this) }
                 var izinDiberikan by remember { mutableStateOf(false) }
-                var layar by remember { mutableStateOf<Layar>(Layar.Kamera(null)) }
+                val versi = remember {
+                    runCatching {
+                        packageManager.getPackageInfo(packageName, 0).versionName
+                    }.getOrNull() ?: "—"
+                }
+                // Pembukaan pertama langsung ke petunjuk, setelah itu ke menu.
+                var layar by remember {
+                    mutableStateOf<Layar>(
+                        if (pengaturan.panduanDibuka == 1) Layar.Menu else Layar.Petunjuk
+                    )
+                }
                 var menyimpan by remember { mutableStateOf(false) }
                 var daftar by remember { mutableStateOf<List<Dokumen>>(emptyList()) }
                 var kueri by remember { mutableStateOf("") }
@@ -134,6 +151,8 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(layar, kueri) {
                     when (val aktif = layar) {
+                        is Layar.Menu ->
+                            daftar = withContext(Dispatchers.IO) { repo.dokumen() }
                         is Layar.Arsip -> daftar = withContext(Dispatchers.IO) { repo.cari(kueri) }
                         is Layar.Dokumen -> withContext(Dispatchers.IO) {
                             dokumen = repo.dokumenById(aktif.id)
@@ -143,18 +162,50 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (!izinDiberikan) {
-                    IzinKamera(onGranted = { izinDiberikan = true })
-                } else {
-                    when (val aktif = layar) {
-                        is Layar.Kamera -> KameraScreen(
-                            sudutMaks = pengaturan.sudutMaks,
-                            modeSenter = pengaturan.modeSenter,
-                            onModeSenter = pengaturan::ubahSenter,
-                            onFoto = { layar = Layar.Proses(it, aktif.target) },
+                BackHandler(enabled = layar !is Layar.Menu && layar !is Layar.Proses) {
+                    if (layar is Layar.Petunjuk) pengaturan.tandaiPanduan()
+                    layar = when (val aktif = layar) {
+                        is Layar.Dokumen -> Layar.Arsip
+                        is Layar.Hasil -> Layar.Kamera(aktif.target)
+                        else -> Layar.Menu
+                    }
+                }
+                // Proses tidak boleh ditinggal di tengah pemrosesan.
+                BackHandler(enabled = layar is Layar.Proses) { }
+
+                when (val aktif = layar) {
+                        is Layar.Menu -> MenuScreen(
+                            jumlahDokumen = daftar.size,
+                            versi = versi,
+                            onPindai = { layar = Layar.Kamera(null) },
                             onArsip = { layar = Layar.Arsip },
+                            onPetunjuk = { layar = Layar.Petunjuk },
+                            onTentang = { layar = Layar.Tentang },
                             onSetelan = { layar = Layar.Setelan },
                         )
+                        is Layar.Petunjuk -> PetunjukScreen(
+                            onKembali = {
+                                pengaturan.tandaiPanduan()
+                                layar = Layar.Menu
+                            },
+                        )
+                        is Layar.Tentang -> TentangScreen(
+                            versi = versi,
+                            onKembali = { layar = Layar.Menu },
+                        )
+                        // Izin kamera baru diminta saat pengguna membuka pemindai.
+                        is Layar.Kamera -> if (!izinDiberikan) {
+                            IzinKamera(onGranted = { izinDiberikan = true })
+                        } else {
+                            KameraScreen(
+                                sudutMaks = pengaturan.sudutMaks,
+                                modeSenter = pengaturan.modeSenter,
+                                onModeSenter = pengaturan::ubahSenter,
+                                onFoto = { layar = Layar.Proses(it, aktif.target) },
+                                onArsip = { layar = Layar.Arsip },
+                                onKembali = { layar = Layar.Menu },
+                            )
+                        }
 
                         is Layar.Proses -> ProsesScreen(
                             file = aktif.file,
@@ -215,7 +266,7 @@ class MainActivity : ComponentActivity() {
                             kueri = kueri,
                             onKueri = { kueri = it },
                             onBuka = { layar = Layar.Dokumen(it.id) },
-                            onKembali = { layar = Layar.Kamera(null) },
+                            onKembali = { layar = Layar.Menu },
                         )
 
                         is Layar.Setelan -> PengaturanScreen(
@@ -239,7 +290,7 @@ class MainActivity : ComponentActivity() {
                                     ).show()
                                 }
                             },
-                            onKembali = { layar = Layar.Kamera(null) },
+                            onKembali = { layar = Layar.Menu },
                         )
 
                         is Layar.Dokumen -> {
@@ -291,7 +342,6 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                }
 
                 galat?.let { teks ->
                     AlertDialog(

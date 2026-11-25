@@ -25,7 +25,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,20 +51,27 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.zacky.docar.gambar.ModeWarna
 import com.zacky.docar.gambar.Pemindai
 import com.zacky.docar.gambar.Titik
-import com.zacky.docar.ui.theme.Garis
+import com.zacky.docar.ui.theme.Aksen
 import com.zacky.docar.ui.theme.Latar
 import com.zacky.docar.ui.theme.Peringatan
+import com.zacky.docar.ui.theme.Permukaan
+import com.zacky.docar.ui.theme.R1
+import com.zacky.docar.ui.theme.R2
+import com.zacky.docar.ui.theme.S1
+import com.zacky.docar.ui.theme.S2
+import com.zacky.docar.ui.theme.S3
+import com.zacky.docar.ui.theme.S4
+import com.zacky.docar.ui.theme.S5
 import com.zacky.docar.ui.theme.Siap
 import com.zacky.docar.ui.theme.Teks
 import com.zacky.docar.ui.theme.TeksRedup
+import com.zacky.docar.ui.theme.Garis
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -99,9 +108,9 @@ fun ProsesScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 20.dp),
     ) {
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(S5))
         Text("Memproses", style = MaterialTheme.typography.headlineMedium, color = Teks)
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(S2))
         Text(
             text = "Tetap di halaman ini sampai selesai.",
             style = MaterialTheme.typography.bodySmall,
@@ -113,7 +122,7 @@ fun ProsesScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(210f / 297f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(R2))
                 .background(Color(0xFF1C1C1F)),
             contentAlignment = Alignment.Center,
         ) {
@@ -131,7 +140,7 @@ fun ProsesScreen(
             Row(
                 modifier = Modifier.heightIn(min = 44.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(S3),
             ) {
                 Box(
                     modifier = Modifier
@@ -155,6 +164,7 @@ fun ProsesScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HasilScreen(
     asli: Bitmap,
@@ -169,6 +179,7 @@ fun HasilScreen(
     var warna by remember { mutableStateOf(ModeWarna.ABU) }
     var hasil by remember { mutableStateOf<Bitmap?>(null) }
     var memproses by remember { mutableStateOf(false) }
+    var sheetMode by remember { mutableStateOf(false) }
 
     // Preview lama tetap tampil selama yang baru dibuat, seperti ScanScreen PdfCraft.
     // LaunchedEffect membatalkan sendiri job lama saat sudut/warna berubah.
@@ -184,37 +195,30 @@ fun HasilScreen(
             .fillMaxSize()
             .background(Latar)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = S4),
     ) {
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(S2))
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(S1),
         ) {
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .border(1.dp, Garis, RoundedCornerShape(14.dp))
-                    .clickable(onClick = onScanUlang)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-            ) {
-                Text("←", style = MaterialTheme.typography.bodyMedium, color = Teks)
-            }
+            IkonKotak(Ikon.Kembali, "Kembali", onClick = onScanUlang)
             Text(
                 text = "Hasil",
                 style = MaterialTheme.typography.headlineMedium,
                 color = Teks,
                 modifier = Modifier.weight(1f),
             )
-            Text(
-                text = if (memproses) "Memproses…" else "1 halaman",
-                style = MaterialTheme.typography.labelSmall,
-                color = TeksRedup,
+            TombolMode(warna = warna, onClick = { sheetMode = true })
+            IkonKotak(
+                ikon = Ikon.Sudut,
+                label = if (ubahSudut) "Selesai" else "Ubah sudut",
+                aktif = ubahSudut,
+                onClick = { ubahSudut = !ubahSudut },
             )
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(S3))
 
         Box(
             modifier = Modifier
@@ -226,7 +230,7 @@ fun HasilScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(asli.width.toFloat() / asli.height.toFloat())
-                    .clip(RoundedCornerShape(10.dp)),
+                    .clip(RoundedCornerShape(R1)),
             ) {
                 Image(
                     bitmap = (if (ubahSudut) asli else hasil ?: asli).asImageBitmap(),
@@ -248,153 +252,136 @@ fun HasilScreen(
                 CircularProgressIndicator(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                        .size(24.dp),
+                        .padding(S3)
+                        .size(20.dp),
                     color = Siap,
                     strokeWidth = 2.dp,
                 )
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-
         if (ubahSudut) {
+            Spacer(Modifier.height(S2))
             Text(
-                text = "Geser titik hijau ke sudut kertas. Quad cekung ditolak otomatis.",
+                text = "Geser titik ke sudut kertas. Quad cekung ditolak otomatis.",
                 style = MaterialTheme.typography.labelSmall,
                 color = TeksRedup,
             )
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PilihanWarna(
-                    teks = "Auto-detect",
-                    aktif = false,
-                    onClick = { ditemukan?.let { sudut = it } },
-                    modifier = Modifier.weight(1f),
-                    aktifkan = ditemukan != null,
-                )
-                PilihanWarna(
-                    teks = "Seluruh foto",
-                    aktif = false,
-                    onClick = {
-                        sudut = listOf(
-                            Titik(0f, 0f),
-                            Titik(asli.width.toFloat(), 0f),
-                            Titik(asli.width.toFloat(), asli.height.toFloat()),
-                            Titik(0f, asli.height.toFloat()),
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                )
+            Spacer(Modifier.height(S1))
+            Row(horizontalArrangement = Arrangement.spacedBy(S4)) {
+                TeksAksi("Auto-detect", aktifkan = ditemukan != null) {
+                    ditemukan?.let { sudut = it }
+                }
+                TeksAksi("Seluruh foto") {
+                    sudut = listOf(
+                        Titik(0f, 0f),
+                        Titik(asli.width.toFloat(), 0f),
+                        Titik(asli.width.toFloat(), asli.height.toFloat()),
+                        Titik(0f, asli.height.toFloat()),
+                    )
+                }
             }
-            Spacer(Modifier.height(8.dp))
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PilihanWarna(
-                teks = "Asli",
-                aktif = warna == ModeWarna.ASLI,
-                onClick = { warna = ModeWarna.ASLI },
-                modifier = Modifier.weight(1f),
-            )
-            PilihanWarna(
-                teks = "Abu",
-                aktif = warna == ModeWarna.ABU,
-                onClick = { warna = ModeWarna.ABU },
-                modifier = Modifier.weight(1f),
-            )
-            PilihanWarna(
-                teks = "Hitam",
-                aktif = warna == ModeWarna.HITAM_PUTIH,
-                onClick = { warna = ModeWarna.HITAM_PUTIH },
-                modifier = Modifier.weight(1f),
-            )
-            PilihanWarna(
-                teks = "Linear",
-                aktif = warna == ModeWarna.LINEAR,
-                onClick = { warna = ModeWarna.LINEAR },
-                modifier = Modifier.weight(1f),
+        Spacer(Modifier.height(S4))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .clip(RoundedCornerShape(R2))
+                .background(Aksen)
+                .clickable(enabled = !memproses && !menyimpan) { onSimpan(hasil ?: asli) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = if (menyimpan) "Menyimpan…" else "Simpan PDF",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                color = Latar,
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(S3))
+    }
 
-        PilihanWarna(
-            teks = if (ubahSudut) "Selesai" else "Ubah sudut",
-            aktif = ubahSudut,
-            onClick = { ubahSudut = !ubahSudut },
-            modifier = Modifier.fillMaxWidth(),
+    if (sheetMode) {
+        ModalBottomSheet(
+            onDismissRequest = { sheetMode = false },
+            containerColor = Permukaan,
+            dragHandle = null,
+        ) {
+            Column(
+                Modifier
+                    .padding(horizontal = S4)
+                    .padding(bottom = S5),
+            ) {
+                Text(
+                    text = "Mode hasil",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TeksRedup,
+                    modifier = Modifier.padding(vertical = S3),
+                )
+                ModeWarna.entries.forEach { mode ->
+                    BarisMode(
+                        label = labelMode(mode),
+                        aktif = warna == mode,
+                        onClick = {
+                            warna = mode
+                            sheetMode = false
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun labelMode(mode: ModeWarna): String = when (mode) {
+    ModeWarna.ASLI -> "Asli"
+    ModeWarna.ABU -> "Abu"
+    ModeWarna.HITAM_PUTIH -> "Hitam"
+    ModeWarna.LINEAR -> "Linear"
+}
+
+@Composable
+private fun TombolMode(warna: ModeWarna, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(R2))
+            .background(Permukaan)
+            .clickable(onClickLabel = "Pilih mode", onClick = onClick)
+            .padding(horizontal = S3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(S1),
+    ) {
+        Text(
+            text = labelMode(warna),
+            style = MaterialTheme.typography.labelMedium,
+            color = Teks,
         )
-
-        Spacer(Modifier.height(10.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFE7E9EC))
-                    .clickable(enabled = !memproses && !menyimpan) { onSimpan(hasil ?: asli) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = if (menyimpan) "Menyimpan…" else "Simpan PDF",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    color = Latar,
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .border(1.dp, Garis, RoundedCornerShape(14.dp))
-                    .clickable(onClick = onScanUlang),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Scan ulang",
-                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 15.sp),
-                    color = Teks,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
+        IkonGambar(Ikon.Turun, TeksRedup, ukuran = 16.dp, tebal = 1.6.dp)
     }
 }
 
 @Composable
-private fun PilihanWarna(
-    teks: String,
-    aktif: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    aktifkan: Boolean = true,
-) {
-    Box(
-        modifier = modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (aktif) Color(0xFFE7E9EC) else Color(0xFF141416))
-            .border(1.dp, if (aktif) Color.Transparent else Garis, RoundedCornerShape(12.dp))
-            .clickable(enabled = aktifkan, onClick = onClick),
-        contentAlignment = Alignment.Center,
+private fun BarisMode(label: String, aktif: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = teks,
-            style = MaterialTheme.typography.labelMedium,
-            color = when {
-                !aktifkan -> TeksRedup.copy(alpha = 0.4f)
-                aktif -> Latar
-                else -> Teks
-            },
-            textAlign = TextAlign.Center,
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (aktif) Teks else TeksRedup,
         )
+        if (aktif) IkonGambar(Ikon.Centang, Siap, ukuran = 18.dp)
     }
 }
 

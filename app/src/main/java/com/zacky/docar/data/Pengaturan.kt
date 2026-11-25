@@ -23,6 +23,10 @@ class Pengaturan(context: Context) {
     var modeSenter by mutableIntStateOf(p.getInt(KUNCI_SENTER, 0))
         private set
 
+    /** Petunjuk hanya dibuka otomatis sekali. */
+    var panduanDibuka by mutableIntStateOf(p.getInt(KUNCI_PANDUAN, 0))
+        private set
+
     /** Indeks [com.zacky.docar.ocr.BahasaOcr]. */
     var bahasaOcr by mutableIntStateOf(p.getInt(KUNCI_BAHASA, 0))
         private set
@@ -42,9 +46,16 @@ class Pengaturan(context: Context) {
         p.edit().putInt(KUNCI_BAHASA, bahasaOcr).apply()
     }
 
+    fun tandaiPanduan() {
+        if (panduanDibuka == 1) return
+        panduanDibuka = 1
+        p.edit().putInt(KUNCI_PANDUAN, 1).apply()
+    }
+
     private companion object {
         const val KUNCI_SUDUT = "sudut_maks"
         const val KUNCI_SENTER = "mode_senter"
         const val KUNCI_BAHASA = "bahasa_ocr"
+        const val KUNCI_PANDUAN = "panduan_dibuka"
     }
 }

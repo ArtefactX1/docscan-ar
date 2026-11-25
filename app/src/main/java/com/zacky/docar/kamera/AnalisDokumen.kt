@@ -109,7 +109,9 @@ class AnalisDokumen(
             val terbaik = Stabilkan.pilihTerdekat(urutKandidat, lama, IOU_GANTI)
             if (terbaik != null) {
                 dipilih = terbaik
-                stabil = Stabilkan.iou(lama, terbaik) >= IOU_STABIL
+                // Dibandingkan dengan quad halus, bukan frame mentah sebelumnya:
+                // jitter antar frame mentah terlalu besar untuk dijadikan patokan diam.
+                stabil = Stabilkan.jarakMaks(lama, terbaik) <= JITTER_MAKS
             } else {
                 // Kontur lain jauh dari quad sekarang: tahan yang lama daripada
                 // melompat ke kandidat yang mungkin meja atau bayangan.
@@ -125,7 +127,7 @@ class AnalisDokumen(
 
     private companion object {
         const val IOU_GANTI = 0.25f
-        const val IOU_STABIL = 0.6f
+        const val JITTER_MAKS = 0.04f
         const val ALPHA_HALUS = 0.35f
     }
 

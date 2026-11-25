@@ -3,6 +3,7 @@ package com.zacky.docar.kamera
 import android.content.Context
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -27,6 +28,8 @@ import com.zacky.docar.sensor.Kesiapan
 import java.io.File
 import java.util.concurrent.Executors
 import kotlinx.coroutines.delay
+
+private const val RATIO = AspectRatio.RATIO_4_3
 
 class KameraController {
     internal var ambil: (() -> Unit)? = null
@@ -60,8 +63,11 @@ fun KameraPreview(
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .build()
     }
+    // Preview dan analyzer wajib punya rasio sama; kalau beda, pemetaan quad ke
+    // layar meleset karena PreviewView memakai FIT_CENTER.
     val imageAnalysis = remember {
         ImageAnalysis.Builder()
+            .setTargetAspectRatio(RATIO)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
     }
@@ -117,7 +123,10 @@ fun KameraPreview(
         future.addListener(
             {
                 provider = future.get()
-                val preview = Preview.Builder().build().also {
+                val preview = Preview.Builder()
+                    .setTargetAspectRatio(RATIO)
+                    .build()
+                    .also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
                 provider?.unbindAll()
@@ -147,10 +156,10 @@ fun KameraPreview(
         }
     }
 
-    // Syarat harus bertahan 500 ms; LaunchedEffect batal sendiri kalau siap berubah jadi false.
+    // Jeda pendek setelah cincin penuh; durasi tahan sudah dihitung MesinCapture.
     LaunchedEffect(siap) {
         if (siap) {
-            delay(500)
+            delay(150)
             potret()
         }
     }

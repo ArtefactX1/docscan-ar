@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
 import java.io.File
+import kotlin.math.hypot
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -21,6 +22,16 @@ data class HasilScan(val halaman: Bitmap, val sudut: List<Titik>)
 
 object Pemindai {
     private const val SISI_MAKS = 2000
+
+    /** Kertas 8–80% frame; di luar itu bukan halaman yang wajar. */
+    private const val LUAS_MIN = 0.08f
+    private const val LUAS_MAKS = 0.80f
+
+    /** Batas kebulatan quad dan dukungan tepi sebelum dianggap kertas. */
+    private const val LONJONG_MAKS = 4.5f
+    private const val TEPI_MIN = 0.5f
+
+    private val EPSILON = listOf(0.02, 0.03, 0.05)
     private const val SISI_DETEKSI = 1200
     private const val LEBAR_A4 = 1240.0
     private const val TINGGI_A4 = 1754.0
@@ -117,42 +128,182 @@ object Pemindai {
         val halus = Mat()
         Imgproc.GaussianBlur(abu, halus, Size(5.0, 5.0), 0.0)
 
+        val lebar = abu.cols()
+        val tinggi = abu.rows()
+        val luasFrame = lebar * tinggi
+        val luasMin = luasFrame * LUAS_MIN
+        val luasMaks = luasFrame * LUAS_MAKS
+
+        // Satu peta tepi gabungan: dipakai mencari kandidat sekaligus menguji
+        // apakah sisi quad benar-benar menempel pada tepi nyata.
+        val tegas = Mat()
+        val longgar = Mat()
+        Imgproc.Canny(halus, tegas, 50.0, 150.0)
+        Imgproc.Canny(halus, longgar, 30.0, 90.0)
         val tepi = Mat()
-        Imgproc.Canny(halus, tepi, 50.0, 150.0)
+        Core.bitwise_or(tegas, longgar, tepi)
         Imgproc.dilate(
             tepi,
             tepi,
             Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(3.0, 3.0)),
         )
+        val peta = ByteArray(lebar * tinggi)
+        tepi.get(0, 0, peta)
 
+        val kandidat = LinkedHashMap<String, List<Titik>>()
+
+        // Jalur 1: kontur dari peta tepi.
         val kontur = ArrayList<MatOfPoint>()
         Imgproc.findContours(tepi, kontur, Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
-
-        val luasMin = abu.cols() * abu.rows() * 0.2
-        val kandidat = ArrayList<Pair<Double, List<Titik>>>(kontur.size)
-
         for (k in kontur) {
+            val luas = Imgproc.contourArea(k)
+            if (luas <= luasMin) continue
             val keliling = Imgproc.arcLength(MatOfPoint2f(*k.toArray()), true)
-            val perkiraan = MatOfPoint2f()
-            Imgproc.approxPolyDP(MatOfPoint2f(*k.toArray()), perkiraan, 0.02 * keliling, true)
+            val segi = cariSegiEmpat(k, keliling, halus) ?: continue
+            if (!kertasSah(segi, luas, lebar, tinggi, peta, luasMin, luasMaks)) continue
+            kandidat[kunci(segi)] = segi
+        }
 
+        // Jalur 2: kecerahan. Kertas bidang paling terang, tetap ketemu walau tepi
+        // putus. Wajib lolos uji bentuk dan dukungan tepi yang sama.
+        kandidatKecerahan(halus, lebar, tinggi, peta, luasMin, luasMaks)
+            .forEach { kandidat[kunci(it.second)] = it.second }
+
+        tegas.release()
+        longgar.release()
+        tepi.release()
+        halus.release()
+
+        return kandidat.values
+            .sortedByDescending { Stabilkan.luas(it) }
+            .take(maks)
+    }
+
+    private fun kandidatKecerahan(
+        halus: Mat,
+        lebar: Int,
+        tinggi: Int,
+        peta: ByteArray,
+        luasMin: Float,
+        luasMaks: Float,
+    ): List<Pair<Double, List<Titik>>> {
+        val biner = Mat()
+        Imgproc.threshold(halus, biner, 0.0, 255.0, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU)
+
+        // Tutup lubang huruf supaya kertas jadi satu bidang, bukan cincin.
+        val bidang = Mat()
+        Imgproc.morphologyEx(
+            biner,
+            bidang,
+            Imgproc.MORPH_CLOSE,
+            Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(9.0, 9.0)),
+        )
+
+        val kontur = ArrayList<MatOfPoint>()
+        Imgproc.findContours(bidang, kontur, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+        biner.release()
+        bidang.release()
+
+        return kontur.mapNotNull { k ->
+            val luas = Imgproc.contourArea(k)
+            if (luas <= luasMin) return@mapNotNull null
+
+            val keliling = Imgproc.arcLength(MatOfPoint2f(*k.toArray()), true)
+            val segi = cariSegiEmpat(k, keliling, halus)
+                ?: kotakDari(k, lebar, tinggi)
+                ?: return@mapNotNull null
+
+            if (!kertasSah(segi, luas, lebar, tinggi, peta, luasMin, luasMaks)) return@mapNotNull null
+            luas to segi
+        }
+    }
+
+    /**
+     * Saringan bentuk: buang bingkai layar, siluet meja, dan bayangan yang
+     * kebetulan terang. Kertas harus kotak, tidak menempel tiga sisi frame, dan
+     * sisinya harus menutupi tepi nyata.
+     */
+    private fun kertasSah(
+        segi: List<Titik>,
+        luas: Double,
+        lebar: Int,
+        tinggi: Int,
+        peta: ByteArray,
+        luasMin: Float,
+        luasMaks: Float,
+    ): Boolean {
+        if (luas < luasMin || luas > luasMaks) return false
+        if (Stabilkan.menempelBingkai(segi, lebar.toFloat(), tinggi.toFloat()) >= 3) return false
+        if (Stabilkan.lonjong(segi) > LONJONG_MAKS) return false
+        return sokongTepi(segi, peta, lebar, tinggi) >= TEPI_MIN
+    }
+
+    /** Fraksi titik sampel di sisi quad yang berimpit dengan peta tepi. */
+    private fun sokongTepi(segi: List<Titik>, peta: ByteArray, lebar: Int, tinggi: Int): Float {
+        val perSisi = 12
+        var kena = 0
+        var total = 0
+        for (i in segi.indices) {
+            val a = segi[i]
+            val b = segi[(i + 1) % 4]
+            for (s in 0 until perSisi) {
+                val t = (s + 0.5f) / perSisi
+                val x = (a.x + (b.x - a.x) * t).toInt()
+                val y = (a.y + (b.y - a.y) * t).toInt()
+                total++
+                if (dekatTepi(peta, lebar, tinggi, x, y)) kena++
+            }
+        }
+        if (total == 0) return 0f
+        return kena.toFloat() / total
+    }
+
+    private fun dekatTepi(peta: ByteArray, lebar: Int, tinggi: Int, x: Int, y: Int): Boolean {
+        // Toleransi 4 px: quad dari jalur kecerahan bergeser beberapa piksel karena
+        // morfologi, tapi tetap harus menempel ke tepi nyata.
+        for (dy in -4..4) {
+            val py = y + dy
+            if (py < 0 || py >= tinggi) continue
+            for (dx in -4..4) {
+                val px = x + dx
+                if (px < 0 || px >= lebar) continue
+                if (peta[py * lebar + px].toInt() != 0) return true
+            }
+        }
+        return false
+    }
+
+    /** Cadangan: persegi pembatas minimum untuk kontur yang tidak bisa diringkas jadi 4 titik. */
+    private fun kotakDari(kontur: MatOfPoint, lebar: Int, tinggi: Int): List<Titik>? {
+        val persegi = Imgproc.minAreaRect(MatOfPoint2f(*kontur.toArray()))
+        val titik = arrayOfNulls<Point>(4)
+        persegi.points(titik)
+        val segi = titik.filterNotNull().map { Titik(it.x.toFloat(), it.y.toFloat()) }
+        if (segi.size != 4) return null
+        val urut = UrutSudut.urut(segi)
+        if (!Stabilkan.sah(urut, lebar.toFloat(), tinggi.toFloat())) return null
+        return urut
+    }
+
+    /** Coba beberapa toleransi aproksimasi: tepi kertas yang bergelombang butuh yang longgar. */
+    private fun cariSegiEmpat(kontur: MatOfPoint, keliling: Double, abu: Mat): List<Titik>? {
+        for (eps in EPSILON) {
+            val perkiraan = MatOfPoint2f()
+            Imgproc.approxPolyDP(MatOfPoint2f(*kontur.toArray()), perkiraan, eps * keliling, true)
             if (perkiraan.total() != 4L) continue
+
             val segi = MatOfPoint(*perkiraan.toArray())
             if (!Imgproc.isContourConvex(segi)) continue
 
-            val luas = Imgproc.contourArea(perkiraan)
-            if (luas <= luasMin) continue
-
             val urut = UrutSudut.urut(segi.toList().map { Titik(it.x.toFloat(), it.y.toFloat()) })
             if (!Stabilkan.sah(urut, abu.cols().toFloat(), abu.rows().toFloat())) continue
-            kandidat += luas to urut
+            return urut
         }
-
-        return kandidat
-            .sortedByDescending { it.first }
-            .take(maks)
-            .map { it.second }
+        return null
     }
+
+    private fun kunci(t: List<Titik>): String =
+        t.joinToString("|") { "${(it.x / 8).toInt()},${(it.y / 8).toInt()}" }
 
     fun luruskan(bitmap: Bitmap, sudut: List<Titik>): Bitmap {
         val asli = Mat()
